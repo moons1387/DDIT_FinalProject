@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.declaration.service.DeclarationMapper">
+
+	<resultMap type="DeclarationVO" id="dclrMap">
+		<id property="dclrNo" column="dclr_no"/>
+		<result property="dclrNo" column="dclr_no" />
+		<result property="dclrSort" column="dclr_sort" />
+		<result property="dclrCn" column="dclr_cn" />
+		<result property="dclrRcptYmd" column="dclr_rcpt_ymd" />
+		<result property="dclrId" column="dclr_id" />
+		<result property="dclrSubId" column="dclr_sub_id" />
+		<result property="dclrAtchFileId" column="dclr_attach_file_id" />
+		<result property="dclrNmtm" column="dclr_nmtm" />
+		<result property="dclrWarnNmtm" column="dclr_warn_nmtm" />
+		 
+		<collection property="fileSrcList" resultMap="fileSrcMap" />
+	</resultMap> 
+    
+    <resultMap type="AtchFileDetailVO" id="fileSrcMap">
+		<id property="atchDetailFileId" column="atch_detail_file_id"/>
+		<result property="atchDetailFileId" column="atch_detail_file_id"/>
+		<result property="atchFilePath" column="atch_file_path"/>
+		<result property="atchFileExtn" column="atch_file_extn"/>
+		<result property="atchFileOrgnlNm" column="atch_file_orgnl_nm"/>
+	</resultMap>
+
+    <!-- 멤버 리스트 -->
+    <select id="getMemberList" resultType="MemberVO" parameterType="int">
+        select mem_prflimg, mem_name, mem_no from member where mem_no != #{memNo} order by mem_no
+    </select>	
+
+    <!-- 멤버 검색 -->
+    <select id="getMemberSearch" parameterType="MemberVO" resultType="MemberVO">
+        select mem_prflimg, mem_name, mem_no, mem_id
+        from member
+        where mem_no != #{memNo}
+        <if test="memName != null and memName != ''">
+            AND mem_name LIKE '%' || #{memName} || '%'
+        </if> 
+        order by mem_no desc
+    </select>
+    
+    <select id="dclrList" resultMap="dclrMap">
+		SELECT
+		    d.dclr_no
+		   ,d.dclr_sort
+		   ,d.dclr_cn
+		   ,to_char(d.dclr_rcpt_ymd , 'YYYY.MM.DD') dclr_rcpt_ymd
+		   ,d.dclr_id
+		   ,d.dclr_sub_id
+		   ,m.mem_name dclrWtrName
+		   ,m.mem_prflimg dclrWtrPrflimg
+		   ,d.dclr_attach_file_id
+		   ,d.dclr_nmtm
+		   ,d.dclr_warn_nmtm
+		FROM
+		    declaration d, member m 
+		WHERE 
+			d.dclr_id = m.mem_no
+		AND 
+			d.dclr_id = #{dclrId}
+		order by dclr_rcpt_ymd desc
+	</select>
+    
+    <insert id="insertDclr" parameterType="DeclarationVO" useGeneratedKeys="true">
+		<selectKey keyProperty="dclrNo" resultType="int" order="BEFORE">
+			select seq_dec.nextval from dual
+		</selectKey>
+		insert into declaration (
+		    dclr_no
+		    , dclr_sort
+		    , dclr_cn
+		    , dclr_rcpt_ymd
+		    , dclr_id
+		    , dclr_sub_id
+		    , dclr_attach_file_id
+		    , dclr_nmtm
+		    , dclr_warn_nmtm
+		    , dclr_state
+		) values (
+		    #{dclrNo}
+		    , #{dclrSort}
+		    , #{dclrCn}
+		    , sysdate
+		    , #{dclrId}
+		    , #{dclrSubId}
+		    , #{dclrAtchFileId}
+		    , 0
+		    , (select max(dclr_warn_nmtm) from declaration where dclr_sub_id = #{dclrSubId})
+		    , 0
+		)
+	</insert>
+    
+
+</mapper>

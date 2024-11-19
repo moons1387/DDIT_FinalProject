@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.facechat.service.IFaceChatMapper">
+
+	<insert id="create" useGeneratedKeys="true">
+		<selectKey keyProperty="roomNo" order="BEFORE" resultType="int">
+			SELECT seq_fc.NEXTVAL FROM DUAL		
+		</selectKey>
+		INSERT INTO FACE_CHAT
+		(ROOM_NO			, ROOM_TITLE		, ROOM_URL_ID	, 
+		 ROOM_PASSWD		, START_TIME		, END_TIME		, 
+		 MEM_NO				, CH_NO			
+		 <if test="thNo != 0">
+			 , TH_NO
+		 </if>	
+		 )
+		VALUES
+		(#{roomNo}			, #{roomTitle}		, #{roomUrlId}	, 
+		 #{roomPasswd}	   	, sysdate			, TO_DATE(#{ldEndDate}, 'YYYY/MM/DD HH24:MI:SS'), 
+		 #{memNo}	   		, #{chNo}		
+		 <if test="thNo != 0">
+			 , #{thNo}
+		 </if>	
+		 )
+	</insert>
+	
+	<select id="getFcVO" parameterType="FaceChatVO" resultType="FaceChatVO">
+		SELECT
+			fc.ROOM_NO
+			, fc.ROOM_TITLE
+			, fc.MEM_NO
+			, c.CH_TTL
+			, ct.TH_TTL
+			, START_TIME
+			, NVL2(ROOM_PASSWD, 'LOCK', NULL) ROOM_PASSWD
+			, (SELECT CH_MEM_NM FROM CHANNEL_MEMBER cm WHERE MEM_NO = fc.MEM_NO AND CH_NO = fc.CH_NO) MEM_NM
+		FROM
+			FACE_CHAT fc
+		JOIN CHANNEL c ON
+			c.CH_NO = fc.CH_NO
+		LEFT OUTER JOIN CHANNEL_THREAD ct ON
+			ct.TH_NO = fc.TH_NO
+		WHERE
+			fc.ROOM_NO = #{roomNo}
+	</select>
+
+	<select id="getFCTotal" resultType="int">
+		SELECT COUNT(*)
+		FROM
+			FACE_CHAT fc
+		JOIN CHANNEL c ON
+			c.CH_NO = fc.CH_NO
+		LEFT OUTER JOIN CHANNEL_THREAD ct ON
+			ct.TH_NO = fc.TH_NO
+		WHERE
+			fc.CH_NO = #{synerhub2}
+		<if test="thNo != 0">
+		AND
+			fc.TH_NO = #{synerhub3}
+		</if>
+		AND
+			fc.ROOM_OPEN = 'Y'
+		ORDER BY 
+			ROOM_NO DESC
+	</select>
+
+	<select id="getFCList" resultType="FaceChatVO">
+		SELECT * FROM 
+		(SELECT ROWNUM RNUM, A.* FROM
+		(SELECT
+			  fc.ROOM_NO
+			, fc.ROOM_TITLE
+			, fc.MEM_NO
+			, c.CH_TTL
+			, ct.TH_TTL
+			, START_TIME
+			, NVL2(ROOM_PASSWD, 'LOCK', NULL) ROOM_PASSWD
+			, (SELECT CH_MEM_NM FROM CHANNEL_MEMBER cm WHERE MEM_NO = fc.MEM_NO AND CH_NO = fc.CH_NO) MEM_NM
+		FROM
+			FACE_CHAT fc
+		JOIN CHANNEL c ON
+			c.CH_NO = fc.CH_NO
+		LEFT OUTER JOIN CHANNEL_THREAD ct ON
+			ct.TH_NO = fc.TH_NO
+	   WHERE
+			fc.CH_NO = #{synerhub2}
+		<if test="thNo != 0">
+		 AND
+			fc.TH_NO = #{synerhub3}
+		</if>
+		  AND 
+		  	fc.END_TIME > sysdate
+	   ORDER BY 
+			ROOM_NO DESC) A)
+<![CDATA[WHERE RNUM >= #{rowCnt} * (#{page}-1) + 1 AND RNUM <= #{rowCnt} * #{page}]]>
+	</select>
+
+	<select id="isTitleExist" parameterType="string" resultType="int">
+		SELECT COUNT(*) FROM 
+      <![CDATA[(SELECT REGEXP_SUBSTR(ROOM_TITLE, '[^,]+', 1, LEVEL) AS ROOM_TITLE 
+			      FROM FACE_CHAT
+			   CONNECT BY LEVEL <= LENGTH(REGEXP_REPLACE(ROOM_TITLE, '[^,]+', '')) + 1) A]]>
+		 WHERE A.ROOM_TITLE = #{roomTitle}
+	</select>
+	
+	<update id="closeRoom" parameterType="string">
+		UPDATE VIDEOCHAT SET ROOM_OPEN = 'N'
+		 WHERE ROOM_URL_ID = #{roomUrlId}
+	</update>
+	
+	<select id="getRoomUrlId" resultType="string">
+		SELECT ROOM_URL_ID FROM FACE_CHAT fc 
+		WHERE fc.ROOM_NO = #{roomNo}
+		  AND fc.ROOM_PASSWD = #{roomPasswd}
+	</select>
+	
+</mapper>

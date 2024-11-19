@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.channelthread.service.IChannelThreadMapper">
+	
+	<insert id="insert" parameterType="ChannelThreadVO" useGeneratedKeys="true">
+	<selectKey keyProperty="thNo" resultType="int" order="BEFORE">
+			select seq_channel_thread.nextval from dual
+		</selectKey>
+	INSERT INTO CHANNEL_THREAD (
+	    TH_NO,
+	    TH_TTL,
+	    TH_PW,
+	    TH_RGDT,
+	    TH_CLR,
+	    CH_NO
+	) VALUES (
+	    #{thNo}
+	    ,#{thTtl}
+	    ,#{thPw}
+	    ,SYSDATE
+	    ,#{thClr}
+	    ,#{chNo}
+	)
+	</insert>
+	
+	<!-- 스레드 전체리스트 -->
+	<select id="list" parameterType="ChannelThreadVO" resultType="ChannelThreadVO">
+	select 
+	    TH_NO, TH_TTL, TH_PW, TH_RGDT, TH_CLR, CH_NO
+	from
+	    channel_thread
+	where
+	    ch_no=#{chNo}
+
+	</select>
+	
+	<!-- 스레드 메인화면  -->
+	<select id="threadselect" resultType="ChannelThreadVO">
+    SELECT 
+	    t.TH_NO, t.TH_TTL,  t.TH_PW, t.TH_RGDT, t.TH_CLR
+	    , c.CH_NO, c.CH_TTL,c.CH_CD,c.CH_CMNT,c.CH_LMG  
+	from 
+	    channel_thread t
+	join 
+	    channel c on t.ch_no = c.ch_no
+	where 
+	    th_no=#{thNo}
+	</select>
+
+	<delete id="threadDelete" parameterType="ChannelThreadVO">
+	
+    delete from CHANNEL_THREAD
+    	where TH_NO = #{thNo}
+	</delete>
+	
+	<select id="threadMemberTotal" parameterType="ChannelThreadVO" resultType="int">
+	     SELECT COUNT(*)
+        FROM 
+         CHANNEL_MEMBER cm 
+          WHERE CH_MEM_TH_NO = #{thNo}
+	</select>
+	
+	<select id="thMemberList" parameterType="ChannelThreadVO" resultType="ChannelThreadVO">
+		
+	 SELECT 
+	    chm.CH_MEM_NO,
+	    chm.CH_ROLE,
+	    chm.CH_ROLE_NM,
+	    chm.CH_PRP,
+	    chm.MEM_NO,
+	    chm.CH_NO,
+	    chm.CH_MEM_NM,
+	    chm.CH_PRF_IMG,
+	    chm.CH_MEM_TH_NM,
+	    chm.CH_MEM_TH_NO,
+	    chm.CH_REGDT,
+	    chm.CH_CNNTDT,
+	    m.MEM_NO,
+	    m.MEM_ID,
+	    m.MEM_NAME,
+	    m.MEM_PRFLIMG,
+	    m.MEM_EMAIL
+	 FROM 
+	    CHANNEL_MEMBER chm 
+	 JOIN 
+	    MEMBER m ON chm.MEM_NO = m.MEM_NO
+	 WHERE chm.CH_MEM_TH_NO = #{thNo}
+	    ORDER BY CH_ROLE, CH_PRP
+    </select>
+    
+</mapper>

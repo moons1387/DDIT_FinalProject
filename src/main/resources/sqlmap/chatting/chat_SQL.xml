@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.ddit.components.chatting.service.IChatMapper">
+
+	<!-- 해당 채팅방의 메시지 리스트 가져오기 -->
+	<select id="messageList" parameterType="int" resultType="ChatMessageVO">
+		SELECT
+		message_id
+		, c.group_no
+		, c.message_content
+		, c.message_regdate
+		, c.mem_no
+		, c.unread_count
+		, c.mem_name
+		, c.msg_file_id
+		, m.mem_prflimg
+		FROM chatmessage c, member m 
+		where group_no = #{groupNo}
+		and c.mem_no = m.mem_no
+		order by message_regdate asc
+	</select>
+
+	<!-- 메시지 등록하기 -->
+	<insert id="insertMessage" parameterType="ChatMessageVO" useGeneratedKeys="true">
+		<selectKey keyProperty="messageId" resultType="int" order="BEFORE">
+			select seq_chatmessage.nextval from dual
+		</selectKey>
+		insert into chatmessage values(#{messageId}, #{groupNo}, #{messageContent}, default, #{memNo}, #{unreadCount}, #{memName}, #{msgFileId})
+	</insert>
+
+	<!-- 나를 제외한 해당 방에 속한 사람들 안읽은 메시지 개수 업데이트 -->
+	<!-- 마지막으로 본 채팅이 기억되게 해야함 -->
+	<update id="updateMessageCountExceptMe" parameterType="ChatMessageVO">
+		update chattingmember
+		set
+		msg_id = #{messageId}
+		where mem_no = #{memNo}
+		and group_no = #{groupNo}
+	</update>
+
+	<!-- 해당 유저가 속하는 채팅방 가져오기 -->
+	<select id="getChattingGroupListById" parameterType="int" resultType="ChattingGroupVO">
+		select
+		A.group_no
+		, A.mem_no
+		, A.group_title
+		, A.group_date
+		, A.chatting_file_id
+		, A.group_img,
+		B.msg_id
+		from chattinggroup A, chattingmember B
+		where A.group_no = B.group_no and
+		B.mem_no = #{memnNo}
+		ORDER by A.group_no DESC
+	</select>
+
+	<!-- study인원 목록 가져오기 -->
+	<select id="getChattingMember" parameterType="int" resultType="ChattingMemberVO">
+		select * from chattingmember
+		where mem_no = #{memNo}
+	</select>
+
+	<!-- 채팅들 읽음 처리 -->
+	<update id="readChatMessage" parameterType="ChatMessageVO">
+		update chattingmember
+		set
+		msg_id = #{messageId}
+		where mem_no = #{memNo}
+		and group_no = #{groupNo}
+	</update>
+
+	<!-- 해당 유저의 안읽은 메시지 개수 -->
+	<select id="getChatCnt" parameterType="string" resultType="int">
+		select nvl(sum(msg_count), 0) cnt from chattingmember
+		where mem_no = #{memNo}
+	</select>
+
+	<!-- 채팅방 인원수 가져오기 -->
+	<select id="getMemberCount" parameterType="int" resultType="int">
+		select count(*) cnt from chattingmember
+		where group_no = #{groupNo}
+	</select>
+
+	<!-- 방안에서 해당 메시지 읽음 카운트 -1 처리 -->
+	<update id="readMessageInRoom" parameterType="ChatMessageVO">
+		update chatmessage
+		set
+		unread_count = unread_count - 1
+		where group_no = #{groupNo}
+		<![CDATA[
+		and message_id > (select msg_id from chattingmember where mem_no = #{memNo} and group_no = #{groupNo})
+		]]>
+	</update>
+
+	<!-- 해당 채팅방의 마지막 메시지 가져오기 -->
+	<select id="getLastMsgList" resultType="ChatMessageVO">
+		SELECT MESSAGE_ID, A.GROUP_NO, MESSAGE_CONTENT, MESSAGE_REGDATE, MEM_NO,
+		UNREAD_COUNT, MEM_NAME, MSG_FILE_ID
+		FROM (
+			SELECT GROUP_NO, max(MESSAGE_REGDATE) MAX
+			FROM CHATMESSAGE c
+			GROUP BY GROUP_NO) A
+		JOIN CHATMESSAGE c2 ON A.GROUP_NO = c2.GROUP_NO
+		WHERE A.MAX = c2.MESSAGE_REGDATE
+		ORDER by MESSAGE_REGDATE DESC
+	</select>
+	
+	<!-- 안읽은 메세지 id 가져오기 -->
+	<select id="getUnreadCntByUser" parameterType="ChatMessageVO" resultType="int">
+		select message_id from chatmessage
+		where group_no = #{groupNo} 
+		and mem_no != #{memNo}
+		<![CDATA[
+			and message_id > #{lastMessageId}
+		]]>
+	</select>
+
+</mapper>

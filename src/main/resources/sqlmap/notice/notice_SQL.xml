@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.notice.service.INoticeMapper">
+	
+		
+	<select id="getNoticeList" resultType="NoticeVO">
+		SELECT
+			b.*
+		FROM (
+			select
+				a.*, ROW_NUMBER() OVER (order by a.NTC_RGDT DESC) rnum
+			from (
+				select
+					NTC_NO, NTC_TTL, NTC_CONTS, NTC_RGDT, NTC_VLD_DT, NTC_HIT, NTC_WTR
+				FROM NOTICE
+				WHERE 1=1
+				ORDER BY NTC_RGDT DESC
+			) a
+		) b
+<!-- 		<![CDATA[WHERE B.RNUM >= #{rowCnt} * (#{page}-1) + 1 AND B.RNUM <= #{rowCnt} * #{page}]]> -->
+	</select>
+	
+	
+	<update id="incrementHit" parameterType="int">
+		update notice
+		set
+			ntc_hit = ntc_hit + 1
+		where ntc_no = #{ntcNo}
+	</update>
+	
+	
+	
+	<select id="detailNotice" parameterType="Integer" resultType="NoticeVO">
+		select 
+			ntc_no, ntc_ttl, ntc_conts, ntc_rgdt, ntc_hit, ntc_wtr
+		from notice
+		where ntc_no = #{ntcNo}
+	</select>
+	
+	<!-- 관리자 -->
+	
+	<sql id="ntcSearch">
+		<if test="searchWord != null and searchType == 'ttl'">
+			and (ntc_ttl like '%' || #{searchWord} || '%')
+		</if>
+	</sql>
+	
+	<insert id="ntcInsert" parameterType="NoticeVO">
+		<selectKey keyProperty="ntcNo" resultType="int" order="BEFORE">
+			select seq_notice.nextval from dual
+		</selectKey>
+		insert into notice (
+			ntc_no
+			, ntc_ttl
+			, ntc_conts
+			, ntc_rgdt
+			, ntc_hit
+			, ntc_wtr
+		) values (
+			#{ntcNo}
+			,#{ntcTtl}
+			,#{ntcConts}
+			,sysdate
+			,#{ntcHit}
+			,#{ntcWtr}
+		)
+	</insert>	
+	
+	<update id="ntcUpdate" parameterType="NoticeVO">
+		update notice
+		set
+			ntc_ttl = #{ntcTtl},
+			ntc_conts = #{ntcConts},
+			ntc_rgdt = sysdate
+		where ntc_no = #{ntcNo}
+	</update>
+	
+	<delete id="deleteNotice" parameterType="Integer">
+		delete from notice
+		where ntc_no = #{ntcNo}
+	</delete>
+	
+</mapper>

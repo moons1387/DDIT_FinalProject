@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN" "http://tiles.apache.org/dtds/tiles-config_3_0.dtd">
+<tiles-definitions>
+
+	<definition name="mainTemplate" template="/WEB-INF/views/mainTemplate.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/tiles/header.jsp"/>
+		<put-attribute name="aside_left" value="/WEB-INF/views/tiles/aside_left.jsp"/>
+		<put-attribute name="aside_right" value="/WEB-INF/views/tiles/aside_right.jsp"/>
+		<put-attribute name="setting" value="/WEB-INF/views/tiles/setting.jsp"/>
+	</definition>
+	
+	<definition name="page/*" extends="mainTemplate">
+		<put-attribute name="content" value="/WEB-INF/views/page/{1}.jsp"/>
+	</definition>
+
+	<definition name="loginTemplate" template="/WEB-INF/views/loginTemplate.jsp"/>
+	
+	<definition name="login/*" extends="loginTemplate">
+		<put-attribute name="content" value="/WEB-INF/views/page/login/{1}.jsp"/>
+	</definition>
+	
+	<definition name="adminTemplate" template="/WEB-INF/views/adminTemplate.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/admin_tiles/header.jsp"/>
+		<put-attribute name="aside" value="/WEB-INF/views/admin_tiles/aside.jsp"/>
+		<put-attribute name="setting" value="/WEB-INF/views/admin_tiles/setting.jsp"/>
+	</definition>
+	
+	<definition name="admin/*" extends="adminTemplate">
+		<put-attribute name="content" value="/WEB-INF/views/page/adminPage/{1}.jsp"/>
+	</definition>
+	<definition name="admin/channel/*" extends="adminTemplate">
+		<put-attribute name="content" value="/WEB-INF/views/page/adminPage/channel/{1}.jsp"/>
+	</definition>
+	
+</tiles-definitions>

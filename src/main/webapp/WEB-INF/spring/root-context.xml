@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:c="http://www.springframework.org/schema/c"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+	
+	
+	<context:component-scan base-package="kr.or.ddit">
+		<context:include-filter type="annotation" expression="org.springframework.stereotype.Service"/>
+		<context:include-filter type="annotation" expression="org.springframework.stereotype.Repository"/>
+		<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+	</context:component-scan>
+	
+	<bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
+		<property name="driverClassName" value="net.sf.log4jdbc.sql.jdbcapi.DriverSpy"/>
+		<property name="url" value="jdbc:log4jdbc:oracle:thin:@112.220.114.130:1521:xe"/>
+		<property name="username" value="team1_202404F"/>
+		<property name="password" value="java"/>
+	</bean>
+	
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"/>
+		<property name="mapperLocations" value="classpath:/sqlmap/**/*_SQL.xml"/>
+		<property name="configLocation" value="/WEB-INF/mybatisAlias/mybatisAlias.xml"/>
+	</bean>
+	
+	<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg name="sqlSessionFactory" index="0" ref="sqlSessionFactory"/>
+	</bean>
+	
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="kr.or.ddit"/>
+	</bean>
+	
+	<!-- 
+		MultipartFile CommonsMultipartResolver 설정 시
+	 -->
+	 <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<!-- 하나의 요청당 파일 업로드 용량 -->
+		<property name="maxUploadSize" value="3145728"/>
+		<!-- 메모리에 저장되는 최대 용량 -->
+		<property name="maxInMemorySize" value="3145728"/>
+		<property name="defaultEncoding" value="UTF-8"/>
+	</bean>	
+	
+	
+	<bean id="uploadPath" class="java.lang.String">
+		<constructor-arg value="\upload\temp\"/>
+	</bean>
+	
+	<bean id="localPath" class="java.lang.String">
+		<constructor-arg value="C:/upload/temp/"/> 
+	</bean>
+	
+	<bean id="uploadPathForMac" class="java.lang.String">
+		<constructor-arg value="/Users/upload/temp/" />
+	</bean>
+	
+	<!-- gmail설정 -->  
+	<bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl"> 
+     	<property name="host" value="smtp.naver.com" />
+  		<property name="port" value="465" />
+ 		<property name="username" value="tjfgusajddl"/> <!-- 자신의 이메일 아이디 -->
+	 	<property name="password" value="dusvlfRkrl12!"/> <!-- 자신의 비밀번호 -->
+	 <!-- 보안연결 TLS과 관련된 설정 -->
+	     <property name="javaMailProperties">
+		    <props>
+		       <prop key="mail.smtp.starttls.enable">true</prop>
+		       <prop key="mail.smtp.auth">true</prop>
+		       <prop key="mail.smtp.ssl.enable">true</prop>
+		       <prop key="mail.smtp.ssl.trust">smtp.naver.com</prop>
+		       <prop key="mail.transport.protocol">smtp</prop>
+		       <prop key="mail.debug">true</prop>
+		    </props>
+	     </property>
+	</bean>	
+	
+	
+	
+	<!-- 스프링 AOP 활성화 -->
+	<aop:aspectj-autoproxy />
+
+	<!-- 어노테이션 기반의 트랜잭션 제어를 활성화 -->
+	<tx:annotation-driven />
+
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	
+	  
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+	   <tx:attributes>	 
+	       <tx:method name="*" propagation="REQUIRED" rollback-for="Exception"/>
+	   </tx:attributes>
+	</tx:advice>
+    
+	<aop:config>
+		<aop:pointcut id="requiredTx" expression="execution(* egovframework.com..*Impl.*(..)) or
+												  execution(* org.egovframe.rte.fdl.excel.impl.*Impl.*(..))"/>
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="requiredTx" />
+	</aop:config>
+	
+</beans>
