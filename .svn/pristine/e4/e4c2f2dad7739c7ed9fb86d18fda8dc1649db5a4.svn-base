@@ -1,0 +1,12 @@
+package kr.or.ddit.components.project.vo;
+
+import lombok.Data;
+
+@Data
+public class ProjectPrgrsInfoVO {
+
+	private int pjtNo;
+	private String pjtNm;
+	private int prgrs;
+	
+}

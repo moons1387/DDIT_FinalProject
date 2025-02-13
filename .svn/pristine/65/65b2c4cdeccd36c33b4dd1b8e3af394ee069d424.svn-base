@@ -1,0 +1,132 @@
+package kr.or.ddit.components.channelthread.web;
+
+import java.util.List;
+
+import javax.inject.Inject;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import kr.or.ddit.components.channel.service.IChannelService;
+import kr.or.ddit.components.channel.vo.ChannelMemberVO;
+import kr.or.ddit.components.channel.vo.ChannelThreadVO;
+import kr.or.ddit.components.channel.vo.ChannelVO;
+import kr.or.ddit.components.channelthread.service.IChannelThreadSerivce;
+import kr.or.ddit.components.equipment.service.IEquipmentService;
+import kr.or.ddit.components.equipment.vo.EquipmentVO;
+import kr.or.ddit.components.threadboard.service.IThreadBoardService;
+import kr.or.ddit.components.threadboard.vo.ThreadBoardVO;
+import kr.or.ddit.vo.PagingVO;
+import lombok.extern.slf4j.Slf4j;
+
+
+@Slf4j
+@Controller
+@RequestMapping("/thread")
+public class ChannelThreadController {
+	
+	@Inject
+	private IThreadBoardService thBoardService;
+	
+	@Inject
+	private IChannelThreadSerivce ThreadService;
+	
+	@Inject
+	private IChannelService service; 
+	
+	@Inject
+	private IEquipmentService eqpService;
+	
+	@PostMapping("/insert")
+	public ResponseEntity<ChannelThreadVO> threadInsert(@RequestBody ChannelThreadVO ThreadVO) {
+		int chNo = ThreadVO.getChNo();
+		ThreadService.insert(ThreadVO);
+		
+		
+		return new ResponseEntity<ChannelThreadVO>(ThreadVO, HttpStatus.OK);
+	}
+	// 스레드사이드 전체 리스트 
+	@PostMapping("/list")
+	public ResponseEntity<List<ChannelThreadVO>> threadList(@RequestBody ChannelThreadVO ThreadVO){
+		int chNo =ThreadVO.getChNo();
+		
+		List<ChannelThreadVO> Threadlist = null;
+		Threadlist = ThreadService.list();
+		log.info("Threadlist == >> " ,Threadlist);
+		return new ResponseEntity<List<ChannelThreadVO>>(Threadlist,HttpStatus.OK);
+	}
+	
+	// 스레드 메인화면
+	@PostMapping("/select")
+	public ResponseEntity<ChannelThreadVO> threadselect(@RequestBody ChannelThreadVO ThreadVO) {
+	    // 스레드 정보 가져오기
+	    ChannelThreadVO select = ThreadService.threadselect(ThreadVO);
+	    
+	    // 게시글 목록 가져오기
+	    ThreadBoardVO thboardVO = new ThreadBoardVO();
+	    thboardVO.setThNo(ThreadVO.getThNo()); // thNo 설정
+	    
+	    // 스레드 멤버 List 
+	    List<ChannelMemberVO> threadMemberList = ThreadService.thMemberList(ThreadVO);
+	    
+	    //스레드 게시판
+	    List<ThreadBoardVO> thboardFreeList = thBoardService.thboardFree(thboardVO);
+	    //스레드 일일게시판
+	    List<ThreadBoardVO> thboardDailyList =thBoardService.thboardDaily(thboardVO);
+	    int total = ThreadService.threadMemberTotal(ThreadVO);
+	    // 게시글 목록을 ChannelThreadVO에 설정
+	    
+	    PagingVO<ThreadBoardVO> pagingVO = new PagingVO<ThreadBoardVO>();
+	    pagingVO.setSynerhub1(ThreadVO.getSynerhub1());
+	    pagingVO.setSynerhub2(ThreadVO.getSynerhub2());
+	    int thboardAuthority = thBoardService.thboardAuthority(pagingVO);
+	    
+	    select.setThboardAuthority(thboardAuthority);
+	    
+	    select.setThraedMemberList(threadMemberList);
+	    select.setThreadFreeBoard(thboardFreeList);
+	    select.setThreadDailyBoard(thboardDailyList);
+	    select.setThreadTotal(total);	
+
+	    ChannelMemberVO channelMemberVO = new ChannelMemberVO();
+	    ChannelVO temp = service.getCntForDashBoard(channelMemberVO);
+	     
+	    select.setCnts(temp);
+	    return new ResponseEntity<ChannelThreadVO>(select, HttpStatus.OK);
+	}
+	
+	@PostMapping("/delete")
+	public ResponseEntity<String> threadDelete(@RequestBody ChannelThreadVO ThreadVO){
+		ThreadService.threadDelete(ThreadVO);
+		return new ResponseEntity<String>("SUCEESS",HttpStatus.OK);
+	}
+	
+	@PostMapping("/thMemberSearch")
+	public ResponseEntity<List<ChannelMemberVO>> threadMemberSearch(@RequestBody ChannelThreadVO ThreadVO){
+		List<ChannelMemberVO> res = ThreadService.thMemberSearch(ThreadVO);
+		return new ResponseEntity<List<ChannelMemberVO>>(res, HttpStatus.OK);
+	}
+	
+	@PostMapping("/threadEqpCount/{chNo}")
+	public ResponseEntity<Integer> threadEqpCount(@PathVariable ("chNo") int chNo){
+		log.info("===============threadeqpcount==============");
+		int eqpCount = eqpService.eqpCount(chNo);
+		return new ResponseEntity<Integer>(eqpCount, HttpStatus.OK);
+	}
+	
+	@PostMapping("/threadEqpUsingCount/{chNo}")
+	public ResponseEntity<Integer> threadEqpUsingCount(@PathVariable ("chNo") int chNo){
+		log.info("===============threadeqUsingpcount==============");
+		int eqpUsingCount = eqpService.eqpUsingCount(chNo);
+		return new ResponseEntity<Integer>(eqpUsingCount, HttpStatus.OK);
+	}
+	
+	
+	
+}

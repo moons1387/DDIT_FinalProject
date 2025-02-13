@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.member.service.IMemberMapper">
+
+	<select id="getUser" parameterType="MemberVO" resultType="MemberVO">
+		SELECT
+		mem_no
+		, mem_id
+		, mem_pw
+		, mem_name
+		, mem_prflimg
+		, mem_email
+		, mem_ph
+		, mem_addr1
+		, mem_addr2
+		, mem_pst_cd
+		, mem_agree
+		, mem_intr
+		, mem_autograph
+		, mem_rgdt
+		, mem_status
+		, mem_drmnt
+		, mem_shtot
+		, enabled
+		, remember_login
+		, remember_id
+		, (select count(*) from channel_member where mem_no = #{memNo}) channel_count
+		FROM
+		member
+		where mem_no = #{memNo}
+	</select>
+
+
+	<select id="getChList" parameterType="MemberVO" resultType="ChannelMemberVO">
+		SELECT
+		chp.plan_no plan_no
+		, ch.ch_ttl ch_ttl
+		, to_char(chm.ch_regdt , 'YYYY.MM.DD') ch_regdt
+		, to_char(chm.ch_cnntdt , 'YYYY.MM.DD') ch_cnntdt
+		, plan_ccl
+		FROM
+		channel_member chm
+		JOIN channel ch ON chm.ch_no = ch.ch_no
+		LEFT OUTER JOIN channel_plan chp ON ch.ch_no = chp.ch_no
+		where chm.mem_no = ${memNo}
+		and chp.paid_no = (select max(paid_no) from channel_plan where ch_no = ch.ch_no)
+		ORDER BY chm.ch_cnntdt
+	</select>
+
+	<select id="getDelList" parameterType="DeclarationVO" resultType="DeclarationVO">
+		SELECT
+		dclr_no
+		, dclr_sort
+		, dclr_cn
+		, TO_CHAR(d.dclr_rcpt_ymd, 'YYYY.MM.DD') dclr_rcpt_ymd
+		, dclr_id
+		, dclr_sub_id
+		, dclr_attach_file_id
+		, dclr_nmtm
+		, dclr_warn_nmtm
+		, dclr_state
+		, m.mem_name dclr_sub_name
+		, m.mem_id dclr_sub_member_id
+		, m.mem_prflimg dclr_sub_prflimg
+		FROM
+		declaration d
+		JOIN MEMBER m ON m.MEM_NO = d.dclr_sub_id
+		WHERE dclr_id = ${dclrId}
+		ORDER BY dclr_rcpt_ymd DESC
+	</select>
+
+	<select id="pagingMemList" parameterType="PaginationInfoVO" resultType="MemberVO">
+		SELECT
+			b.*
+		from(
+			select
+				a.*, row_number() over(order by a.mem_no ASC) rnum
+			from(
+				select
+					m.mem_no
+					, m.mem_name
+					, m.mem_email
+					, m.mem_prflimg
+					, to_char(m.mem_rgdt, 'YYYY.MM.DD') mem_rgdt_string
+					, m.mem_status
+					, (select count(*) from channel_member where mem_no = m.mem_no) channel_count
+					, to_char((select max(ch_cnntdt) from channel_member where mem_no = m.mem_no group by mem_no), 'YYYY.MM.DD') ch_cnntdt
+				FROM
+					member m
+				ORDER BY
+					mem_no ASC
+			)a
+		)b
+		<![CDATA[
+			where b.rnum >= #{startRow} and b.rnum <= #{endRow} 
+		]]> 
+	</select>
+	
+	<select id="memberCount" parameterType="PaginationInfoVO" resultType="int">
+		SELECT 
+		    COUNT(*) 
+		FROM 
+		    member
+	</select>
+
+	<select id="getAdminList" resultType="MemberVO">
+		SELECT
+		    m.mem_no
+		  , mem_id
+		  , mem_pw
+		  , mem_name
+		  , mem_prflimg
+		  , mem_email
+		  , mem_ph
+		  , mem_addr1
+		  , mem_addr2
+		  , mem_pst_cd
+		  , mem_agree
+		  , mem_intr
+		  , mem_autograph
+		  , TO_CHAR(mem_rgdt, 'YYYY.MM.DD') memRgdtString
+		  , mem_status
+		  , mem_drmnt
+		  , mem_shtot
+		  , enabled
+		  , remember_login
+		  , remember_id
+		FROM
+		    member m, role r
+		where m.mem_no = r.mem_no
+		and r.mem_auth = 'ROLE_ADMIN'
+	</select>
+	
+	<update id="adminUpdate" parameterType="MemberVO">
+		UPDATE member
+		SET
+		    mem_name = #{memName},
+		    mem_ph = #{memPh},
+		    mem_email = #{memEmail},
+		    mem_addr1 = #{memAddr1},
+		    mem_addr2 = #{memAddr2},
+		    mem_prflimg = #{memPrflimg}
+		WHERE
+		    mem_no = #{memNo}
+	</update>
+
+</mapper>

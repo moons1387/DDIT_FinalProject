@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.autograph.service.impl.IAutographMapper">
+
+	<select id="getAutograph" resultType="AutographVO">
+		SELECT ATGRPH_NO, SRC
+		  FROM MEMBER_AUTOGRAPH
+		 WHERE MEM_NO = #{memNo}
+		   AND ATGRPH_DL = 'N' 
+	</select>
+
+	<update id="updateAutograph">
+		UPDATE MEMBER_AUTOGRAPH SET
+		   SRC = #{src}
+		 WHERE ATGRPH_NO = #{atgrphNo}
+	</update>
+	
+	<update id="deleteAutograph">
+		UPDATE MEMBER_AUTOGRAPH SET
+		ATGRPH_DL = 'Y'
+		WHERE ATGRPH_NO = #{atgrphNo}
+	</update>
+	
+	<insert id="insertAutograph" parameterType="AutographVO" useGeneratedKeys="true">
+		<selectKey keyProperty="atgrphNo" resultType="int" order="BEFORE">
+			SELECT SEQ_ATGRPH_NO.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO MEMBER_AUTOGRAPH(
+			ATGRPH_NO	 		, MEM_NO  , ATCH_FILE_ID ,
+			ATCH_DETAIL_FILE_ID, SRC)
+		VALUES(
+			#{atgrphNo}	 		, #{memNo}, #{atchFileId},
+		    #{atchDetailFileId} , #{src})
+	</insert>
+
+</mapper>

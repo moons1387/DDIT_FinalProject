@@ -1,0 +1,484 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.admin.declaration.service.AdminDeclarationMapper">
+
+   <resultMap type="AdminDeclarationVO" id="adminDclrMap">
+      <id property="dclrNo" column="dclr_no"/>
+      <result property="dclrNo" column="dclr_no" />
+      <result property="dclrSort" column="dclr_sort" />
+      <result property="dclrCn" column="dclr_cn" />
+      <result property="dclrRcptYmd" column="dclr_rcpt_ymd" />
+      <result property="dclrNmtm" column="dclr_nmtm" />
+      <result property="dclrWarnNmtm" column="dclr_warn_nmtm" />
+      <result property="dclrAtchFileId" column="dclr_attach_file_id" />
+      <result property="dclrId" column="dclr_id" />
+      <result property="dclrSubId" column="dclr_sub_id" />
+      <result property="dclrWtrName" column="dclr_wtr_name" />
+      <result property="dclrWtrPrflimg" column="dclr_wtr_prflimg" />
+      <result property="dclrWtrId" column="dclr_wtr_id" />
+      <result property="dclrSubName" column="dclr_sub_name" />
+      <result property="dclrSubPrflimg" column="dclr_sub_prflimg" />
+      <result property="dclrSubAddr1" column="dclr_sub_addr1" />
+      <result property="dclrSubAddr2" column="dclr_sub_addr2" />
+      <result property="dclrSubPstCd" column="dclr_sub_pst_cd" />
+      <result property="dclrSubPh" column="dclr_sub_ph" />
+      <result property="dclrSubEmail" column="dclr_sub_email" />
+      <result property="dclrSubNo" column="dclr_sub_no" />
+      <result property="dclrAtchFilePath" column="dclr_atch_file_path" />
+      <result property="dclrState" column="dclr_state" />
+      <result property="totalDclr" column="total_dclr" />
+      <result property="memShtot" column="mem_shtot" />
+       
+      <collection property="fileSrcList" resultMap="fileSrcMap" />
+   </resultMap> 
+    
+    <resultMap type="AtchFileDetailVO" id="fileSrcMap">
+      <id property="atchDetailFileId" column="atch_detail_file_id"/>
+      <result property="atchDetailFileId" column="atch_detail_file_id"/>
+      <result property="atchFilePath" column="atch_file_path"/>
+      <result property="atchFileExtn" column="atch_file_extn"/>
+      <result property="atchFileOrgnlNm" column="atch_file_orgnl_nm"/>
+   </resultMap>
+   
+   <select id="selectDclr" resultType="AdminDeclarationVO" parameterType="int">
+      SELECT
+         d.dclr_no
+          , m2.mem_prflimg dclr_sub_prflimg
+          , m2.mem_name dclr_sub_name
+          , m2.mem_addr1 dclr_sub_addr1
+          , m2.mem_addr2 dclr_sub_addr2
+          , m2.mem_pst_cd dclr_sub_pst_cd
+          , m2.mem_ph dclr_sub_ph
+          , m2.mem_email dclr_sub_email
+          , m1.mem_name dclr_wtr_name
+          , d.dclr_sort
+          , afd.atch_file_path dclr_atch_file_path
+          , d.dclr_cn
+          , d.dclr_sub_id
+          , d.dclr_state
+          , to_char(d.dclr_rcpt_ymd, 'YYYY.MM.DD') dclr_rcpt_ymd
+      FROM
+          declaration d
+      LEFT OUTER JOIN member m1 ON d.dclr_id = m1.mem_no                     
+      LEFT OUTER JOIN member m2 ON d.dclr_sub_id = m2.mem_no
+      LEFT OUTER JOIN atch_file_detail afd on d.dclr_attach_file_id = afd.atch_file_id
+      WHERE 
+         d.dclr_no = #{dclrNo}
+   </select>
+   
+   <!-- 최근 신고 내역 -->
+   <select id="getRecentDclr" resultType="AdminDeclarationVO" parameterType="int">
+        SELECT
+          d.dclr_no
+          , d.dclr_sub_id
+          , m2.mem_prflimg dclr_sub_prflimg
+          , m2.mem_name dclr_sub_name
+          , m2.mem_addr1 dclr_sub_addr1
+          , m2.mem_addr2 dclr_sub_addr2
+          , m2.mem_pst_cd dclr_sub_pst_cd
+          , m2.mem_ph dclr_sub_ph
+          , m2.mem_email dclr_sub_email
+          , m1.mem_name dclr_wtr_name
+          , d.dclr_sort
+          , d.dclr_state
+          , afd.atch_file_path dclr_atch_file_path
+          , d.dclr_cn
+          , to_char(d.dclr_rcpt_ymd, 'YYYY.MM.DD') dclr_rcpt_ymd
+      FROM
+          declaration d
+      LEFT OUTER JOIN member m1 ON d.dclr_id = m1.mem_no                     
+      LEFT OUTER JOIN member m2 ON d.dclr_sub_id = m2.mem_no
+      LEFT OUTER JOIN atch_file_detail afd on d.dclr_attach_file_id = afd.atch_file_id
+      WHERE 
+          d.dclr_sub_id = #{dclrSubId}
+      ORDER BY dclr_rcpt_ymd DESC
+    </select>
+    
+    <update id="blackInsert" parameterType="AdminDeclarationVO">
+    	UPDATE MEMBER
+    	SET
+    		MEM_SHTOT=1
+    	WHERE MEM_NO = #{dclrSubNo}
+    </update>
+    
+    <update id="blackDelete" parameterType="AdminDeclarationVO">
+    	UPDATE MEMBER
+    	SET
+    		MEM_SHTOT=0
+    	WHERE MEM_NO = #{dclrSubNo}
+    </update>
+    
+    <!-- 최근 신고 내역 상세조회 -->
+    <select id="rctDclrDetail" resultType="AdminDeclarationVO" parameterType="int">
+        SELECT
+          d.dclr_no
+          , d.dclr_sub_id
+          , m2.mem_prflimg dclr_sub_prflimg
+          , m2.mem_name dclr_sub_name
+          , m2.mem_addr1 dclr_sub_addr1
+          , m2.mem_addr2 dclr_sub_addr2
+          , m2.mem_pst_cd dclr_sub_pst_cd
+          , m2.mem_ph dclr_sub_ph
+          , m2.mem_email dclr_sub_email
+          , m1.mem_name dclr_wtr_name
+          , m1.mem_id dclr_wtr_id
+          , d.dclr_sort
+          , afd.atch_file_path dclr_atch_file_path
+          , d.dclr_cn
+          , to_char(d.dclr_rcpt_ymd, 'YYYY.MM.DD') dclr_rcpt_ymd
+      FROM
+          declaration d
+      LEFT OUTER JOIN member m1 ON d.dclr_id = m1.mem_no                     
+      LEFT OUTER JOIN member m2 ON d.dclr_sub_id = m2.mem_no
+      LEFT OUTER JOIN atch_file_detail afd on d.dclr_attach_file_id = afd.atch_file_id
+      WHERE 
+          d.dclr_no = #{dclrNo}
+      ORDER BY dclr_rcpt_ymd DESC
+    </select>
+    
+    <!-- 경고 횟수 증가 -->
+    <update id="increaseWarningCount" parameterType="int">
+	    UPDATE declaration
+	    SET dclr_warn_nmtm = dclr_warn_nmtm + 1,
+	    DCLR_STATE = 1
+	    WHERE dclr_sub_id = #{dclrSubId}
+	</update>
+
+    <!-- 경고 횟수 감소 -->
+    <update id="decreaseWarningCount" parameterType="int">
+	    UPDATE declaration
+	    SET dclr_warn_nmtm = dclr_warn_nmtm - 1
+	    WHERE dclr_sub_id = #{dclrSubId}
+	</update>
+    
+   <!-- 블랙리스트 회원 조회 --> 
+	<select id="blackListManage" resultType="AdminDeclarationVO">   
+   		SELECT
+   		b.*
+   		from(
+   		select
+			a.*, row_number() over(order by a.dclr_no desc) rnum
+		from(
+			select
+			    d.dclr_no,
+			    d.dclr_sub_id,
+			    m2.mem_name dclr_sub_name,
+			    m2.mem_prflimg dclr_sub_prflimg,
+			    m2.mem_no dclr_sub_no,
+			    COUNT(d2.dclr_no) dclr_nmtm,
+			    d.dclr_warn_nmtm,
+			    TO_CHAR(d.dclr_rcpt_ymd, 'YYYY.MM.DD') dclr_rcpt_ymd,
+			    (SELECT COUNT(DISTINCT dclr_sub_id) FROM declaration) total_dclr
+		FROM
+		    declaration d
+		LEFT OUTER JOIN
+		    member m1 ON d.dclr_id = m1.mem_no
+		LEFT OUTER JOIN
+		    member m2 ON d.dclr_sub_id = m2.mem_no
+		LEFT OUTER JOIN
+		    declaration d2 ON d2.dclr_sub_id = d.dclr_sub_id  
+		WHERE
+		    d.dclr_no = (
+		        SELECT MAX(d3.dclr_no)
+		        FROM declaration d3
+		        WHERE d3.dclr_sub_id = d.dclr_sub_id
+		    )
+
+		    AND m2.mem_shtot = 1  
+		    <include refid="blackSearch"/>
+		GROUP BY
+		    d.dclr_no,
+		    d.dclr_sub_id,
+		    m2.mem_name,
+		    m2.mem_prflimg,
+		    m2.mem_no,
+   			m2.mem_shtot,
+		    d.dclr_warn_nmtm,
+		    TO_CHAR(d.dclr_rcpt_ymd, 'YYYY.MM.DD')
+		ORDER BY dclr_rcpt_ymd DESC
+			)a
+		)b
+		<![CDATA[
+			where b.rnum >= #{startRow} and b.rnum <= #{endRow} 
+		]]>
+	
+   	</select>
+   	
+   	<!-- 블랙리스트 검색 -->
+   	<sql id="blackSearch">
+		<if test="searchWord != null and searchType == 'writer'">
+			and (m2.mem_name like '%'||#{searchWord}||'%')
+		</if>
+	</sql>
+	
+	<!-- 블랙리스트 카운트 -->
+	<select id="selectBlackCount" parameterType="PaginationInfoVO" resultType="int">
+		SELECT 
+		    COUNT(DISTINCT d.dclr_sub_id) 
+		FROM 
+		    declaration d
+		JOIN 
+		    member m2 ON d.dclr_sub_id = m2.mem_no
+		WHERE 
+		    1 = 1
+		AND 
+			m2.mem_shtot = 1  
+		<include refid="blackSearch"/>
+	</select>
+	
+   	<sql id="dclrSearch">
+		<if test="searchWord != null and searchType == 'content'">
+			and (dclr_cn like '%'||#{searchWord}||'%')
+		</if>
+		<if test="searchWord != null and searchType == 'writer'">
+			and (m2.mem_name like '%'||#{searchWord}||'%')
+		</if>
+		<if test="searchWord != null and searchType == 'category'">
+	        and (CASE 
+	            WHEN DCLR_SORT = 1 THEN '스팸 및 홍보'
+	            WHEN DCLR_SORT = 2 THEN '욕설 및 부적절한 언어'
+	            WHEN DCLR_SORT = 3 THEN '음란물'
+	            WHEN DCLR_SORT = 4 THEN '허위 정보'
+	            WHEN DCLR_SORT = 5 THEN '불법정보'
+	            ELSE '기타' 
+	        END like '%' || #{searchWord} || '%')
+	    </if>
+	</sql>
+   	
+   	<select id="selectDclrCount" parameterType="PaginationInfoVO" resultType="int">
+		SELECT 
+		    COUNT(DISTINCT d.dclr_sub_id) 
+		FROM 
+		    declaration d
+		JOIN 
+		    member m2 ON d.dclr_sub_id = m2.mem_no
+		WHERE 
+		    1 = 1
+		<include refid="dclrSearch"/>
+	</select>
+	
+	<!-- 신고 대상자 리스트 -->
+<!--    <select id="dclrList" parameterType="PaginationInfoVO" resultType="AdminDeclarationVO"> -->
+<!-- 	   	select -->
+<!-- 	   		b.* -->
+<!-- 	   	from( -->
+<!-- 	   		select -->
+<!-- 	   			a.*, row_number() over(order by a.dclr_no desc) rnum -->
+<!-- 	   		from( -->
+<!-- 			      SELECT -->
+<!-- 			      		count(*), -->
+<!-- 					    d.dclr_no, -->
+<!-- 					    d.dclr_sub_id, -->
+<!-- 					    m2.mem_name dclr_sub_name, -->
+<!-- 					    m2.mem_prflimg dclr_sub_prflimg, -->
+<!-- 					    m2.mem_no dclr_sub_no, -->
+<!-- 			            m2.mem_shtot mem_shtot, -->
+<!-- 					    COUNT(d2.dclr_no) dclr_nmtm, -->
+<!-- 					    d.dclr_warn_nmtm, -->
+<!-- 					    d.dclr_state, -->
+<!-- 					    TO_CHAR(d.dclr_rcpt_ymd, 'YYYY.MM.DD') dclr_rcpt_ymd, -->
+<!-- 					    (SELECT COUNT(DISTINCT dclr_sub_id) FROM declaration) total_dclr -->
+<!-- 					FROM -->
+<!-- 					    declaration d -->
+<!-- 					LEFT OUTER JOIN -->
+<!-- 					    member m1 ON d.dclr_id = m1.mem_no -->
+<!-- 					LEFT OUTER JOIN -->
+<!-- 					    member m2 ON d.dclr_sub_id = m2.mem_no -->
+<!-- 					LEFT OUTER JOIN -->
+<!-- 					    declaration d2 ON d2.dclr_sub_id = d.dclr_sub_id   -->
+<!-- 					WHERE -->
+<!-- 					    d.dclr_no = ( -->
+<!-- 					        SELECT MAX(d3.dclr_no) -->
+<!-- 					        FROM declaration d3 -->
+<!-- 					        WHERE d3.dclr_sub_id = d.dclr_sub_id -->
+<!-- 					    ) -->
+<!-- 					    AND d.dclr_warn_nmtm = ( -->
+<!-- 	                       SELECT MAX(d4.dclr_warn_nmtm) -->
+<!-- 	                       FROM declaration d4 -->
+<!-- 	                       WHERE d4.dclr_sub_id = d.dclr_sub_id -->
+<!--                    		) -->
+<!-- 						<include refid="dclrSearch"/> -->
+<!-- 					GROUP BY -->
+<!-- 					    d.dclr_no, -->
+<!-- 					    d.dclr_sub_id, -->
+<!-- 					    m2.mem_name, -->
+<!-- 					    m2.mem_prflimg, -->
+<!-- 					    m2.mem_no, -->
+<!-- 			            m2.mem_shtot, -->
+<!-- 					    d.dclr_warn_nmtm, -->
+<!-- 					    d.dclr_state, -->
+<!-- 					    TO_CHAR(d.dclr_rcpt_ymd, 'YYYY.MM.DD') -->
+<!-- 					ORDER BY dclr_rcpt_ymd DESC -->
+<!-- 				) a -->
+<!-- 	   		) b -->
+<!-- 	   		<![CDATA[ -->
+<!-- 				where b.rnum >= #{startRow} and b.rnum <= #{endRow}  -->
+<!-- 			]]>  -->
+<!--    </select> -->
+
+<!-- 	<select id="dclrList" parameterType="PaginationInfoVO" resultType="AdminDeclarationVO"> -->
+<!--    		SELECT -->
+<!-- 		    b.* -->
+<!-- 		FROM ( -->
+<!-- 		    SELECT -->
+<!-- 		        a.*, ROW_NUMBER() OVER(ORDER BY a.dclr_no DESC) rnum -->
+<!-- 		    FROM ( -->
+<!-- 		        SELECT -->
+<!-- 		            d.dclr_no, -->
+<!-- 		            d.dclr_sub_id, -->
+<!-- 		            m2.mem_name dclr_sub_name, -->
+<!-- 		            m2.mem_prflimg dclr_sub_prflimg, -->
+<!-- 		            m2.mem_no dclr_sub_no, -->
+<!-- 		            m2.mem_shtot mem_shtot, -->
+<!-- 		            COUNT(d2.dclr_no) dclr_nmtm, -->
+<!-- 		            d.dclr_warn_nmtm, -->
+<!-- 		            d.dclr_state, -->
+<!-- 		            TO_CHAR(d.dclr_rcpt_ymd, 'YYYY.MM.DD') dclr_rcpt_ymd, -->
+<!-- 		            (SELECT COUNT(DISTINCT dclr_sub_id) FROM declaration) total_dclr -->
+<!-- 		        FROM -->
+<!-- 		            declaration d -->
+<!-- 		        LEFT OUTER JOIN -->
+<!-- 		            member m1 ON d.dclr_id = m1.mem_no -->
+<!-- 		        LEFT OUTER JOIN -->
+<!-- 		            member m2 ON d.dclr_sub_id = m2.mem_no -->
+<!-- 		        LEFT OUTER JOIN -->
+<!-- 		            declaration d2 ON d2.dclr_sub_id = d.dclr_sub_id   -->
+<!-- 		        WHERE -->
+<!-- 						d.dclr_no = ( -->
+<!-- 							SELECT MAX(d3.dclr_no) -->
+<!-- 							FROM declaration d3 -->
+<!-- 							WHERE d3.dclr_sub_id = d.dclr_sub_id -->
+<!-- 						) -->
+<!-- 		                <include refid="dclrSearch"/> -->
+<!-- 		        GROUP BY -->
+<!-- 		            d.dclr_no, -->
+<!-- 		            d.dclr_sub_id, -->
+<!-- 		            m2.mem_name, -->
+<!-- 		            m2.mem_prflimg, -->
+<!-- 		            m2.mem_no, -->
+<!-- 		            m2.mem_shtot, -->
+<!-- 		            d.dclr_warn_nmtm, -->
+<!-- 		            d.dclr_state, -->
+<!-- 		            TO_CHAR(d.dclr_rcpt_ymd, 'YYYY.MM.DD') -->
+<!-- 		    ) a -->
+<!-- 		) b -->
+<!-- 		<![CDATA[ -->
+<!-- 			where b.rnum >= #{startRow} and b.rnum <= #{endRow}  -->
+<!-- 	    	ORDER BY b.dclr_rcpt_ymd DESC -->
+<!-- 		]]> -->
+<!-- 	</select> -->
+
+	<select id="dclrList" parameterType="PaginationInfoVO" resultType="AdminDeclarationVO">
+	    SELECT
+	        b.*
+	    FROM (
+	        SELECT
+	            a.*, ROW_NUMBER() OVER(ORDER BY a.dclr_rcpt_ymd DESC) rnum  -- 수정: dclr_rcpt_ymd로 정렬
+	        FROM (
+	            SELECT
+	                d.dclr_no,
+	                d.dclr_sub_id,
+	                m2.mem_name dclr_sub_name,
+	                m2.mem_prflimg dclr_sub_prflimg,
+	                m2.mem_no dclr_sub_no,
+	                m2.mem_shtot mem_shtot,
+	                COUNT(d2.dclr_no) dclr_nmtm,
+	                d.dclr_warn_nmtm,
+	                d.dclr_state,
+	                TO_CHAR(d.dclr_rcpt_ymd, 'YYYY.MM.DD') dclr_rcpt_ymd,
+	                (SELECT COUNT(DISTINCT dclr_sub_id) FROM declaration) total_dclr
+	            FROM
+	                declaration d
+	            LEFT OUTER JOIN
+	                member m1 ON d.dclr_id = m1.mem_no
+	            LEFT OUTER JOIN
+	                member m2 ON d.dclr_sub_id = m2.mem_no
+	            LEFT OUTER JOIN
+	                declaration d2 ON d2.dclr_sub_id = d.dclr_sub_id  
+	            WHERE
+	                d.dclr_no = (
+	                    SELECT MAX(d3.dclr_no)
+	                    FROM declaration d3
+	                    WHERE d3.dclr_sub_id = d.dclr_sub_id
+	                )
+	                <include refid="dclrSearch"/>
+	            GROUP BY
+	                d.dclr_no,
+	                d.dclr_sub_id,
+	                m2.mem_name,
+	                m2.mem_prflimg,
+	                m2.mem_no,
+	                m2.mem_shtot,
+	                d.dclr_warn_nmtm,
+	                d.dclr_state,
+	                TO_CHAR(d.dclr_rcpt_ymd, 'YYYY.MM.DD')
+	        ) a
+	    ) b
+	    <![CDATA[
+	        WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow} 
+	        ORDER BY b.dclr_rcpt_ymd DESC  
+	    ]]>
+	</select>
+	
+   		
+	<!-- 해당 멤버 신고 처리 건수 -->
+	<select id="selectHandledCount" resultType="int" parameterType="AdminDeclarationVO">
+	    SELECT 
+			COUNT(*) 
+		FROM 
+		    declaration 
+		WHERE 
+		    DCLR_SUB_ID = #{dclrSubId} AND DCLR_STATE = 1
+	</select>
+	
+	<!-- 해당 멤버 미처리 건수 -->
+	<select id="selectUnHandledCount" resultType="int" parameterType="AdminDeclarationVO">
+	    SELECT 
+		    COUNT(*) 
+		FROM 
+		    declaration 
+		WHERE 
+		    DCLR_SUB_ID = #{dclrSubId} AND DCLR_STATE = 0
+	</select>
+	
+	<!-- 신고 유형별 통계 -->
+	<select id="dclrStats" resultType="AdminDeclarationStatsVO">
+	    SELECT
+		    DCLR_SORT dclrSort,
+		    COUNT(*) count
+		FROM
+		    declaration
+		GROUP BY 
+		    DCLR_SORT 
+		ORDER BY
+		    DCLR_SORT ASC
+	</select>
+	
+	<!-- 월별 신고 통계 -->
+	<select id="dclrStatsPerMonth" parameterType="int" resultType="AdminDeclarationStatsVO">
+	    SELECT
+		    dclr_sort dclrSort,
+		    COUNT(*) count
+		FROM
+		    declaration
+		WHERE
+		    EXTRACT(MONTH FROM DCLR_RCPT_YMD) = #{month}
+		GROUP BY 
+		    DCLR_SORT
+		ORDER BY
+		    DCLR_SORT ASC
+	</select>
+   	
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+

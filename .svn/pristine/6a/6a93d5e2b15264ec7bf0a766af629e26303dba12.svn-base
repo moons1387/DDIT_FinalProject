@@ -1,0 +1,40 @@
+package kr.or.ddit.components.admin.channel.web;
+
+import javax.inject.Inject;
+
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import kr.or.ddit.components.admin.channel.service.IChannelAccountingService;
+import kr.or.ddit.components.admin.channel.vo.ChannelDataVO;
+import kr.or.ddit.vo.PagingVO;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Controller
+@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+@RequestMapping("/admin/channel")
+public class ChannelAccounting {
+	
+	@Inject
+	private IChannelAccountingService service;
+	
+	
+	@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+	@GetMapping("/accounting.do")
+	public String channelAccountingPage() {
+		return "admin/channel/channelAccounting";
+	}
+	
+	@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+	@GetMapping("/channellist")
+	public PagingVO<ChannelDataVO> channelList(@RequestBody PagingVO<ChannelDataVO> page) {
+		page.setTotal(service.getChTotal());
+		page.setList(service.getChList());
+		return page;
+	}
+	
+}

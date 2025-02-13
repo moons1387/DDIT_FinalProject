@@ -1,0 +1,577 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.document.service.IDocumentMapper">
+
+	<resultMap type="DocumentVO" id="DocumentMap">
+		<id property="docNo" column="DOC_NO"/>
+		<result property="rnum" column="RNUM"/>
+		<result property="memNo" column="MEM_NO"/>
+		<result property="thNo" column="TH_NO"/>
+		<result property="chNo" column="CH_NO"/>
+		<result property="docTtl" column="DOC_TTL"/>
+		<result property="docConts" column="DOC_CONTS"/>
+		<result property="docWrtr" column="DOC_WRTR"/>
+		<result property="docRgdt" column="DOC_RGDT"/>
+		<result property="docStat" column="DOC_STAT"/>
+		<result property="rsltnYmd" column="RSLTN_YMD"/>
+		<result property="rjctRsn" column="RJCT_RSN"/>
+		<result property="docFileId" column="DOC_FILE_ID"/>
+		<result property="memNm" column="MEM_NM"/>
+		<result property="thTtl" column="TH_TTL"/>
+		<result property="chMemNm" column="CH_MEM_NM"/>
+		<result property="chRoleNm" column="CH_ROLE_NM"/>
+		<result property="chRole" column="CH_ROLE"/>
+		<result property="aplnMemNm" column="APLN_MEM_NM"/>
+		<result property="aplnStat" column="APLN_STAT"/>
+		<collection property="aplnList" resultMap="AplnMap"/>
+	</resultMap>
+	
+	<resultMap type="AplnVO" id="AplnMap">
+		<id property="aplnNo" column="APLN_NO"/>
+		<result property="docNo" column="DOC_NO"/>
+		<result property="aplnMemNo" column="APLN_MEM_NO"/>
+		<result property="aplnMemNm" column="APLN_MEM_NM"/>
+		<result property="aplnRegdt" column="APLN_REGDT"/>
+		<result property="aplnCn" column="APLN_CN"/>
+		<result property="aplnStat" column="APLN_STAT"/>
+		<result property="atgrphImg" column="ATGRPH_IMG"/>
+		<result property="chMemNm" column="CH_MEM_NM"/>
+		<result property="chRoleNm" column="CH_ROLE_NM"/>
+		<result property="chRole" column="CH_ROLE"/>
+	</resultMap>
+
+
+	<select id="getTotal" resultType="int">
+		SELECT COUNT(*)
+		  FROM (SELECT ROWNUM RNUM, Y.* 
+			  	  FROM (SELECT Z.*, a.APLN_NO, a.APLN_MEM_NM
+						  FROM (SELECT C.*, cm.CH_MEM_NM DOC_WRTR_NM 
+					  			  FROM (SELECT B.DOC_NO, d.DOC_TTL, d.DOC_RGDT, B.FILE_CNT, ct.TH_TTL, d.DOC_WRTR, d.TH_NO, d.DOC_STAT
+										  FROM (SELECT A.DOC_NO, COUNT(afd.ATCH_DETAIL_FILE_ID) FILE_CNT
+										    	  FROM (SELECT DOC_NO, DOC_FILE_ID, TH_NO	
+										   	         	  FROM DOCUMENT
+											     	  	 WHERE DOC_WRTR = #{synerhub1}
+												     	   AND CH_NO = #{synerhub2}
+												     	   AND DOC_STAT = 'DCST00'
+														<if test="synerhub3 != null and synerhub3 != '' and synerhub3 != 0">
+														   AND TH_NO = #{synerhub3}
+														</if>
+												       	   	   ) A
+										       	  LEFT OUTER JOIN ATCH_FILE_DETAIL afd ON A.DOC_FILE_ID = afd.ATCH_FILE_ID
+										   	  GROUP BY A.DOC_NO) B
+									   	  JOIN DOCUMENT d ON d.DOC_NO = B.DOC_NO
+									   	  LEFT OUTER JOIN CHANNEL_THREAD ct ON ct.TH_NO = d.TH_NO
+									   		) C
+						   		  JOIN CHANNEL_MEMBER cm ON cm.MEM_NO = C.DOC_WRTR
+						   		) Z
+					  	  LEFT OUTER JOIN APLN a ON a.DOC_NO = Z.DOC_NO
+				 	  ORDER BY Z.DOC_NO DESC) Y
+				WHERE Y.APLN_NO IN (SELECT min(APLN_NO) 
+								     FROM DOCUMENT d 
+								     JOIN APLN a2 ON d.DOC_NO = a2.DOC_NO
+								      AND a2.APLN_STAT = 'APST00'
+								     GROUP BY d.DOC_NO))
+								     where 1=1
+		<if test="synerhub3 != null and synerhub3 != '' and synerhub3 != 0">
+		   AND TH_NO = #{synerhub3}
+		</if>
+		<if test="searchTitle != null and searchTitle != ''">
+		   AND DOC_TTL LIKE #{searchTitle}
+		</if>
+		<if test="searchName != null and searchName != ''">
+		   AND DOC_WRTR_NM  LIKE #{searchName}
+		</if>
+	</select>
+	
+	<select id="getDocList" resultType="DocumentVO">
+		SELECT *
+		  FROM (SELECT ROWNUM RNUM, Y.* 
+			  	  FROM (SELECT Z.*, a.APLN_NO, a.APLN_MEM_NM
+						  FROM (SELECT C.*, cm.CH_MEM_NM DOC_WRTR_NM 
+					  			  FROM (SELECT B.DOC_NO, d.DOC_TTL, d.DOC_RGDT, B.FILE_CNT, ct.TH_TTL, d.DOC_WRTR, d.TH_NO, d.DOC_STAT
+										  FROM (SELECT A.DOC_NO, COUNT(afd.ATCH_DETAIL_FILE_ID) FILE_CNT
+										    	  FROM (SELECT DOC_NO, DOC_FILE_ID, TH_NO	
+										   	         	  FROM DOCUMENT
+											     	  	 WHERE DOC_WRTR = #{synerhub1}
+												     	   AND CH_NO = #{synerhub2}
+												     	   AND DOC_STAT = 'DCST00'
+														<if test="synerhub3 != null and synerhub3 != '' and synerhub3 != 0">
+														   AND TH_NO = #{synerhub3}
+														</if>
+												       	   	   ) A
+										       	  LEFT OUTER JOIN ATCH_FILE_DETAIL afd ON A.DOC_FILE_ID = afd.ATCH_FILE_ID
+										   	  GROUP BY A.DOC_NO) B
+									   	  JOIN DOCUMENT d ON d.DOC_NO = B.DOC_NO
+									   	  LEFT OUTER JOIN CHANNEL_THREAD ct ON ct.TH_NO = d.TH_NO
+									   		) C
+						   		  JOIN CHANNEL_MEMBER cm ON cm.MEM_NO = C.DOC_WRTR
+						   		) Z
+					  	  LEFT OUTER JOIN APLN a ON a.DOC_NO = Z.DOC_NO
+				 	  ORDER BY Z.DOC_NO DESC) Y
+				WHERE Y.APLN_NO IN (SELECT min(APLN_NO) 
+								     FROM DOCUMENT d 
+								     JOIN APLN a2 ON d.DOC_NO = a2.DOC_NO
+								      AND a2.APLN_STAT = 'APST00'
+								     GROUP BY d.DOC_NO))
+<![CDATA[WHERE RNUM >= #{rowCnt} * (#{page}-1) + 1 AND RNUM <= #{rowCnt} * #{page}]]>
+		<if test="synerhub3 != null and synerhub3 != '' and synerhub3 != 0">
+		   AND TH_NO = #{synerhub3}
+		</if>
+		<if test="searchTitle != null and searchTitle != ''">
+		   AND DOC_TTL LIKE #{searchTitle}
+		</if>
+		<if test="searchName != null and searchName != ''">
+		   AND DOC_WRTR_NM  LIKE #{searchName}
+		</if>
+	</select>
+	
+	<select id="getDocCurrentTotal" resultType="int">
+		SELECT COUNT(*) 
+		  FROM (SELECT ROWNUM RNUM, Y.* 
+			  	  FROM (SELECT Z.*, a.APLN_NO, a.APLN_MEM_NM
+						  FROM (SELECT C.*, cm.CH_MEM_NM DOC_WRTR_NM 
+					  			  FROM (SELECT B.DOC_NO, d.DOC_TTL, d.DOC_RGDT, B.FILE_CNT, ct.TH_TTL, d.DOC_WRTR, d.TH_NO
+										  FROM (SELECT A.DOC_NO, COUNT(afd.ATCH_DETAIL_FILE_ID) FILE_CNT
+										    	  FROM (SELECT DOC_NO, DOC_FILE_ID, TH_NO	
+										   	         	  FROM DOCUMENT
+											     	  	 WHERE DOC_WRTR = #{synerhub1}
+												     	   AND CH_NO = #{synerhub2}
+											     	   <if test="synerhub3 != null and synerhub3 != '' and synerhub3 != 0">
+														   AND TH_NO = #{synerhub3}
+														</if>
+												       	   	   ) A
+										       	  LEFT OUTER JOIN ATCH_FILE_DETAIL afd ON A.DOC_FILE_ID = afd.ATCH_FILE_ID
+										   	  GROUP BY A.DOC_NO) B
+									   	  JOIN DOCUMENT d ON d.DOC_NO = B.DOC_NO
+									   	  LEFT OUTER JOIN CHANNEL_THREAD ct ON ct.TH_NO = d.TH_NO
+									   		) C
+						   		  JOIN CHANNEL_MEMBER cm ON cm.MEM_NO = C.DOC_WRTR
+						   		) Z
+					  	  LEFT OUTER JOIN APLN a ON a.DOC_NO = Z.DOC_NO
+						 WHERE a.APLN_STAT != 'APST99'
+				 	  ORDER BY Z.DOC_NO DESC) Y
+				 WHERE APLN_NO IN (SELECT MAX(APLN_NO) 
+									 FROM DOCUMENT d 
+									 JOIN APLN a ON d.DOC_NO = a.DOC_NO 
+								    WHERE APLN_STAT != 'APST99'
+								      AND d.CH_NO = #{synerhub2}
+								      AND d.DOC_WRTR = #{synerhub1}
+						      		<if test="synerhub3 != 0">
+									  AND d.TH_NO = #{synerhub3}
+									</if>
+								 GROUP BY d.DOC_NO))
+	WHERE 1 = 1
+		<if test="synerhub3 != 0">
+	  AND TH_NO = #{synerhub3}
+		</if>
+		<if test="searchTitle != null and searchTitle != ''">
+	  AND DOC_TTL LIKE #{searchTitle}
+		</if>
+		<if test="searchName != null and searchName != ''">
+	  AND DOC_WRTR_NM  LIKE #{searchName}
+		</if>
+	</select>
+	
+	<select id="getDocCurrentList" resultType="DocumentVO">
+		SELECT * 
+		  FROM (SELECT ROWNUM RNUM, Y.* 
+			  	  FROM (SELECT Z.*, a.APLN_NO, a.APLN_MEM_NM
+						  FROM (SELECT C.*, cm.CH_MEM_NM DOC_WRTR_NM 
+					  			  FROM (SELECT B.DOC_NO, d.DOC_TTL, d.DOC_RGDT, B.FILE_CNT, ct.TH_TTL, d.DOC_WRTR, d.TH_NO
+										  FROM (SELECT A.DOC_NO, COUNT(afd.ATCH_DETAIL_FILE_ID) FILE_CNT
+										    	  FROM (SELECT DOC_NO, DOC_FILE_ID, TH_NO	
+										   	         	  FROM DOCUMENT
+											     	  	 WHERE DOC_WRTR = #{synerhub1}
+												     	   AND CH_NO = #{synerhub2}
+											      		<if test="synerhub3 != null and synerhub3 != '' and synerhub3 != 0">
+													       AND TH_NO = #{synerhub3}
+														</if>
+												       	   	   ) A
+										       	  LEFT OUTER JOIN ATCH_FILE_DETAIL afd ON A.DOC_FILE_ID = afd.ATCH_FILE_ID
+										   	  GROUP BY A.DOC_NO) B
+									   	  JOIN DOCUMENT d ON d.DOC_NO = B.DOC_NO
+									   	  LEFT OUTER JOIN CHANNEL_THREAD ct ON ct.TH_NO = d.TH_NO
+									   		) C
+						   		  JOIN CHANNEL_MEMBER cm ON cm.MEM_NO = C.DOC_WRTR
+						   		) Z
+					  	  LEFT OUTER JOIN APLN a ON a.DOC_NO = Z.DOC_NO
+						 WHERE a.APLN_STAT = 'APST00'
+				 	  ORDER BY Z.DOC_NO DESC) Y
+		WHERE Y.APLN_NO IN (SELECT min(APLN_NO) 
+						     FROM DOCUMENT d 
+						     JOIN APLN a2 ON d.DOC_NO = a2.DOC_NO
+						    WHERE D.CH_NO = #{synerhub2}
+						      AND D.DOC_WRTR = #{synerhub1}
+						      AND a2.APLN_STAT = 'APST00'
+				      		<if test="synerhub3 != null and synerhub3 != '' and synerhub3 != 0">
+						      AND d.TH_NO = #{synerhub3}
+							</if>
+					     GROUP BY d.DOC_NO))
+<![CDATA[WHERE RNUM >= #{rowCnt} * (#{page}-1) + 1 AND RNUM <= #{rowCnt} * #{page}]]>
+		<if test="synerhub3 != null and synerhub3 != '' and synerhub3 != 0">
+		   AND TH_NO = #{synerhub3}
+		</if>
+		<if test="searchTitle != null and searchTitle != ''">
+		   AND DOC_TTL LIKE #{searchTitle}
+		</if>
+		<if test="searchName != null and searchName != ''">
+		   AND DOC_WRTR_NM  LIKE #{searchName}
+		</if>
+	</select>
+	
+	<select id="getDocApprovalTotal" resultType="int">
+		SELECT COUNT(*) 
+			   FROM DOCUMENT d 
+			   JOIN (SELECT DOC_NO, Z.APLN_NO
+					   FROM APLN a 
+					   JOIN (SELECT min(APLN_NO) APLN_NO 
+							   FROM APLN a 
+							   JOIN DOCUMENT d ON a.DOC_NO = d.DOC_NO 
+							  WHERE d.CH_NO = #{synerhub2} 
+							    AND a.APLN_STAT = 'APST00' 
+							  GROUP BY d.DOC_NO) Z ON a.APLN_NO = Z.APLN_NO
+					  WHERE a.APLN_MEM_NO = #{synerhub1}) Y ON d.DOC_NO = Y.DOC_NO
+			   JOIN CHANNEL_MEMBER cm ON d.DOC_WRTR = cm.MEM_NO
+			   JOIN APLN a2 ON Y.APLN_NO = a2.APLN_NO
+		 WHERE 1 = 1
+		<if test="searchTitle != null and searchTitle != ''">
+		   AND d.DOC_TTL LIKE #{searchTitle}
+		</if>
+		<if test="searchName != null and searchName != ''">
+		   AND cm.CH_MEM_NM LIKE #{searchName}
+		</if>
+		<if test="synerhub3 != 0">
+		   AND d.TH_NO = #{synerhub3}
+		</if>
+	</select>
+	
+	<select id="getDocApprovalList" resultType="DocumentVO">
+		SELECT W.* FROM
+		(SELECT ROWNUM RNUM, X.* 
+		   FROM (SELECT d.DOC_NO		, d.DOC_TTL		, d.DOC_RGDT
+		   			  , d.DOC_FILE_ID	, Y.APLN_NO		, cm.CH_MEM_NM
+		   			  , d.TH_NO
+		   			  , (SELECT COUNT(*) FROM ATCH_FILE_DETAIL afd WHERE afd.ATCH_FILE_ID = d.DOC_FILE_ID) FILE_CNT
+				   FROM DOCUMENT d 
+				   JOIN (SELECT DOC_NO, Z.APLN_NO
+						   FROM APLN a 
+						   JOIN (SELECT min(APLN_NO) APLN_NO 
+								   FROM APLN a 
+								   JOIN DOCUMENT d ON a.DOC_NO = d.DOC_NO 
+								  WHERE d.CH_NO = #{synerhub2} 
+								    AND a.APLN_STAT = 'APST00' 
+								  GROUP BY d.DOC_NO) Z ON a.APLN_NO = Z.APLN_NO
+						  WHERE a.APLN_MEM_NO = #{synerhub1}) Y ON d.DOC_NO = Y.DOC_NO
+				   JOIN CHANNEL_MEMBER cm ON d.DOC_WRTR = cm.MEM_NO
+				   JOIN APLN a2 ON Y.APLN_NO = a2.APLN_NO
+				  ORDER BY d.DOC_NO DESC) X) W
+		WHERE 1 = 1
+		<if test="searchTitle != null and searchTitle != ''">
+	    	AND W.DOC_TTL LIKE #{searchTitle}
+		</if>
+		<if test="searchName != null and searchName != ''">
+	    	AND W.CH_MEM_NM LIKE #{searchName}
+		</if>
+		<if test="synerhub3 != 0">
+   			AND W.TH_NO = #{synerhub3}
+		</if>
+ <![CDATA[AND W.RNUM >= #{rowCnt} * (#{page}-1) + 1 AND W.RNUM <= #{rowCnt} * #{page}]]>
+	</select>
+	
+	<select id="getDocCompleteTotal" parameterType="PagingVO" resultType="int">
+		  SELECT COUNT(*)
+		  FROM (SELECT d.DOC_TTL
+			      FROM APLN a 
+			      JOIN DOCUMENT d ON a.DOC_NO = d.DOC_NO 
+			      JOIN CHANNEL_MEMBER cm ON cm.MEM_NO = d.DOC_WRTR 
+			     WHERE a.APLN_NO IN (SELECT max(a.APLN_NO) APLN_NO
+							   	 	   FROM APLN a 
+							   		  WHERE a.DOC_NO IN (SELECT a.DOC_NO
+											  	    	   FROM DOCUMENT d 
+											  	    	   JOIN APLN a ON a.DOC_NO = d.DOC_NO
+												   		  WHERE a.APLN_MEM_NO = #{synerhub1}
+												     		AND d.CH_NO = #{synerhub2}
+											       		  GROUP BY a.DOC_NO)
+							   		  GROUP BY a.DOC_NO)
+				   AND a.APLN_STAT = 'APST01'
+				   AND d.DOC_STAT = 'DCST00'
+				 ORDER BY d.DOC_NO DESC) Z
+	 	WHERE 1 = 1
+		<if test="searchTitle != null and searchTitle != ''">
+	    	AND W.DOC_TTL LIKE #{searchTitle}
+		</if>
+		<if test="searchName != null and searchName != ''">
+	    	AND W.CH_MEM_NM LIKE #{searchName}
+		</if>
+		<if test="synerhub3 != 0">
+   			AND W.TH_NO = #{synerhub3}
+		</if>
+	</select>
+	
+	<select id="getDocCompleteList" parameterType="PagingVO" resultType="DocumentVO">
+		  SELECT W.* FROM
+		  (SELECT ROWNUM RNUM, Z.*
+		  FROM (SELECT d.DOC_TTL, a.DOC_NO, a.APLN_MEM_NM, a.APLN_MEM_NO, cm.CH_MEM_NM, d.DOC_RGDT
+		  			 , (SELECT CH_ROLE_NM FROM CHANNEL_MEMBER cm2 WHERE cm2.MEM_NO = a.APLN_MEM_NO AND cm2.CH_NO = 95) CH_ROLE_NM
+		  			 , (SELECT COUNT(*) FROM ATCH_FILE_DETAIL afd WHERE afd.ATCH_FILE_ID = d.DOC_FILE_ID) FILE_CNT
+			      FROM APLN a 
+			      JOIN DOCUMENT d ON a.DOC_NO = d.DOC_NO 
+			      JOIN CHANNEL_MEMBER cm ON cm.MEM_NO = d.DOC_WRTR 
+			     WHERE a.APLN_NO IN (SELECT max(a.APLN_NO) APLN_NO
+							   	 	   FROM APLN a 
+							   		  WHERE a.DOC_NO IN (SELECT a.DOC_NO
+											  	    	   FROM DOCUMENT d 
+											  	    	   JOIN APLN a ON a.DOC_NO = d.DOC_NO
+												   		  WHERE a.APLN_MEM_NO = #{synerhub1}
+												     		AND d.CH_NO = #{synerhub2}
+											       		  GROUP BY a.DOC_NO)
+							   		  GROUP BY a.DOC_NO)
+				   AND a.APLN_STAT = 'APST01'
+				   AND d.DOC_STAT = 'DCST00'
+				 ORDER BY d.DOC_NO DESC) Z) W
+<![CDATA[WHERE RNUM >= #{rowCnt} * (#{page}-1) + 1 AND RNUM <= #{rowCnt} * #{page}]]>
+		 <if test="searchTitle != null and searchTitle != ''">
+		   AND LOWER(W.DOC_TTL) LIKE LOWER(#{searchTitle})
+		 </if>
+		<if test="searchName != null and searchName != ''">
+	    	AND W.CH_MEM_NM LIKE #{searchName}
+		</if>
+		<if test="synerhub3 != 0">
+   			AND W.TH_NO = #{synerhub3}
+		</if>
+	</select>
+	
+	<select id="getDocDetail" resultMap="DocumentMap">
+		SELECT d.DOC_NO , d.DOC_TTL , d.DOC_CONTS , d.DOC_WRTR , d.DOC_RGDT , d.CH_NO , d.TH_NO ,
+			   a.APLN_MEM_NO , a.APLN_MEM_NM , a.APLN_STAT , a.ATGRPH_IMG , a.APLN_NO, cm.CH_ROLE , 
+			   cm.CH_ROLE_NM , cm.CH_MEM_NM , ct.TH_TTL , d.DOC_STAT, d.RJCT_RSN
+		  FROM DOCUMENT d 
+		  LEFT OUTER JOIN APLN a ON a.DOC_NO = d.DOC_NO 
+		  JOIN CHANNEL_MEMBER cm ON a.APLN_MEM_NO = cm.MEM_NO
+		  JOIN CHANNEL_THREAD ct ON cm.CH_MEM_TH_NO = ct.TH_NO 
+		 WHERE d.DOC_NO = #{docNo}
+		   AND d.DOC_STAT != 'DCST99'
+		   AND a.APLN_STAT != 'APST99'
+		 ORDER BY APLN_ORDER
+	</select>
+	
+	<insert id="docInsert" parameterType="DocumentVO" useGeneratedKeys="true">
+		<selectKey keyProperty="docNo" resultType="int" order="BEFORE">
+			SELECT SEQ_DOC_NO.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO DOCUMENT
+		(DOC_NO, DOC_TTL, DOC_CONTS, DOC_WRTR, DOC_RGDT, DOC_STAT, RSLTN_YMD, 
+		 RJCT_RSN, DOC_FILE_ID, CH_NO, TH_NO)
+		VALUES(#{docNo}, #{docTtl}, #{docConts}, #{memNo}, sysdate, 'DCST00', NULL,
+		 NULL, #{docFileId}, #{chNo}, (SELECT NULLIF(#{thNo}, 0) FROM DUAL))
+	</insert>
+	
+	<insert id="aplnInsert" parameterType="AplnVO" useGeneratedKeys="true">
+		<selectKey keyProperty="aplnNo" resultType="int" order="BEFORE">
+			SELECT SEQ_APLN_NO.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO APLN a 
+		(APLN_NO
+		, DOC_NO
+		, APLN_MEM_NO
+		, APLN_MEM_NM
+		, APLN_REGDT
+		, APLN_CN
+		, APLN_STAT
+		, ATGRPH_IMG
+		, APLN_ORDER)
+		VALUES 
+		(#{aplnNo}
+		, #{docNo}
+		, #{aplnMemNo}
+		, #{aplnMemNm}
+		, sysdate
+		, NULL
+		, #{aplnStat}
+		, #{atgrphImg}
+		, #{aplnOrder})
+	</insert>
+	
+	<select id="getAutographer" parameterType="ChannelThreadVO" resultType="ChannelMemberVO">
+		SELECT
+			MEM_NO
+			, CH_MEM_NM
+			, cm.CH_ROLE
+			, CH_ROLE_NM
+			, CH_MEM_TH_NO
+			, CH_MEM_TH_NM
+			, CH_PRF_IMG
+			, ch.ch_ttl
+		FROM
+			CHANNEL_MEMBER cm
+		LEFT OUTER JOIN CHANNEL_THREAD ct ON
+			cm.CH_MEM_TH_NO = ct.TH_NO
+		JOIN CHANNEL ch ON
+			cm.ch_no = ch.ch_no
+		WHERE
+			cm.CH_NO = #{chNo}
+		<if test="thNo != null and thNo != ''">
+			AND cm.CH_MEM_TH_NO = #{thNo}
+		</if>
+		ORDER BY
+			MEM_NO
+			, CH_ROLE
+			, CH_MEM_TH_NM
+	</select>
+	
+	<select id="getDocFileList" resultType="AtchFileDetailVO">
+		SELECT afd.ATCH_FILE_SIZE , afd.ATCH_FILE_EXTN , afd.ATCH_FILE_ORGNL_NM , afd.ATCH_FILE_PATH ,
+			   afd.ATCH_FILE_SAVE_NM , afd.ATCH_FILE_REGDT , afd.ATCH_DETAIL_FILE_ID
+		  FROM DOCUMENT d 
+		  JOIN ATCH_FILE_DETAIL afd ON d.DOC_FILE_ID = afd.ATCH_FILE_ID 
+		 WHERE d.DOC_NO = #{docNo}
+		   AND d.DOC_STAT != 'DCST99'
+	</select>
+
+	<select id="getDocTotalByStat" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*) FROM
+		(SELECT ROWNUM RNUM, B.DOC_NO, d.DOC_TTL, d.DOC_RGDT, B.FILE_CNT, ct.TH_TTL 
+		   FROM (SELECT A.DOC_NO, COUNT(afd.ATCH_DETAIL_FILE_ID) FILE_CNT
+			       FROM (SELECT DOC_NO, DOC_FILE_ID, TH_NO
+			   	           FROM DOCUMENT
+				       	  WHERE DOC_WRTR = #{synerhub1}
+					        AND CH_NO = #{synerhub2}
+					      <if test="stat != null and stat != ''">
+					        AND DOC_STAT = #{stat}
+					      </if>
+					        ) A
+			       LEFT OUTER JOIN ATCH_FILE_DETAIL afd ON A.DOC_FILE_ID = afd.ATCH_FILE_ID
+			   GROUP BY A.DOC_NO
+			   ORDER BY A.DOC_NO DESC) B
+		   JOIN DOCUMENT d ON d.DOC_NO = B.DOC_NO
+		   LEFT OUTER JOIN CHANNEL_THREAD ct ON ct.TH_NO = d.TH_NO
+		  WHERE 1 = 1
+		<if test="searchTitle != null and searchTitle != ''">
+		    AND DOC_TTL LIKE #{searchTitle}
+		</if>
+		<if test="searchThread != null and searchThread != ''">
+		    AND TH_TTL LIKE #{searchThread}
+		</if>
+		  )
+	</select>
+
+	<select id="getDocListByStat" parameterType="PagingVO" resultType="DocumentVO">
+		SELECT * FROM
+		(SELECT ROWNUM RNUM, B.DOC_NO, d.DOC_TTL, d.DOC_RGDT, B.FILE_CNT, ct.TH_TTL 
+		   FROM (SELECT A.DOC_NO, COUNT(afd.ATCH_DETAIL_FILE_ID) FILE_CNT
+			       FROM (SELECT DOC_NO, DOC_FILE_ID, TH_NO
+			   	           FROM DOCUMENT
+				       	  WHERE DOC_WRTR = #{synerhub1}
+					        AND CH_NO = #{synerhub2}
+					      <if test="stat != null and stat != ''">
+					        AND DOC_STAT = #{stat}
+					      </if>
+					        ) A
+			       LEFT OUTER JOIN ATCH_FILE_DETAIL afd ON A.DOC_FILE_ID = afd.ATCH_FILE_ID
+			   GROUP BY A.DOC_NO
+			   ORDER BY A.DOC_NO DESC) B
+		   JOIN DOCUMENT d ON d.DOC_NO = B.DOC_NO
+		   LEFT OUTER JOIN CHANNEL_THREAD ct ON ct.TH_NO = d.TH_NO
+		  WHERE 1 = 1
+		<if test="searchTitle != null and searchTitle != ''">
+		    AND DOC_TTL LIKE #{searchTitle}
+		</if>
+		<if test="searchThread != null and searchThread != ''">
+		    AND TH_TTL LIKE #{searchThread}
+		</if>
+		  )
+<![CDATA[WHERE RNUM >= #{rowCnt} * (#{page}-1) + 1 AND RNUM <= #{rowCnt} * #{page}]]>
+	</select>
+
+	<update id="cancleDocuemt">
+		UPDATE DOCUMENT SET 
+		DOC_STAT = 'DCST03'
+		WHERE DOC_NO = #{docNo}
+	</update>
+	
+	<update id="returnDocument">
+		UPDATE DOCUMENT SET 
+		DOC_STAT = 'DCST02'
+		WHERE DOC_NO = #{docNo}
+	</update>
+	
+	<update id="aplnLnUpdate" parameterType="AplnVO" useGeneratedKeys="true">
+		 MERGE 
+		  INTO APLN 
+		 USING DUAL ON (APLN_NO = #{aplnNo} AND APLN_STAT != 'APST99')
+		  WHEN MATCHED THEN
+		UPDATE SET
+			   APLN_MEM_NO = #{aplnMemNo}
+			 , APLN_MEM_NM = #{aplnMemNm}
+			 , APLN_REGDT = sysdate
+			 , ATGRPH_IMG = #{atgrphImg}
+			 , APLN_ORDER = #{aplnOrder}
+		  WHEN NOT MATCHED THEN
+		INSERT(
+			   APLN_NO
+			 , DOC_NO
+			 , APLN_MEM_NO
+			 , APLN_MEM_NM
+			 , APLN_REGDT
+			 , APLN_STAT
+			 , ATGRPH_IMG
+			 , APLN_ORDER)
+		VALUES(
+			   seq_apln_no.NEXTVAL
+			 , #{docNo}
+			 , #{aplnMemNo}
+			 , #{aplnMemNm}
+			 , sysdate
+			 , #{aplnStat}
+			 , #{atgrphImg}
+			 , #{aplnOrder} )
+	</update>
+	
+	<update id="docUpdate">
+		UPDATE DOCUMENT SET
+		DOC_TTL = #{docTtl},
+		DOC_CONTS = #{docConts},
+		DOC_RGDT = sysdate,
+		<if test="docFileId != 0">
+		DOC_FILE_ID = #{docFileId},
+		</if>
+		DOC_STAT = 'DCST00'
+		WHERE DOC_NO = #{docNo}
+	</update>
+	
+	<update id="aplnUpdate">
+		UPDATE APLN SET
+		APLN_MEM_NO = #{aplnMemNo},
+		APLN_MEM_NM = #{aplnMemNm},
+		ATGRPH_IME = #{atgrphImg}	
+		WHERE APLN_NO = #{aplnNo}
+	</update>
+	
+	<update id="docApprove">
+		UPDATE APLN 
+		   SET APLN_STAT = 'APST01',
+		   	   ATGRPH_IMG = #{atgrphImg}
+		 WHERE DOC_NO = #{docNo}
+		   AND APLN_MEM_NO = #{aplnMemNo}
+	</update>
+	
+	<update id="aplnDelete" parameterType="AplnVO">
+		UPDATE APLN 
+		   SET APLN_STAT = 'APST99'
+		 WHERE DOC_NO = #{docNo}
+		   AND APLN_ORDER > 1
+	</update>
+	
+	<update id="docReject" parameterType="DocumentVO">
+		UPDATE DOCUMENT
+		   SET DOC_STAT = 'DCST04',
+			   RJCT_RSN = #{rjctRsn}
+		 WHERE DOC_NO = #{docNo}   
+	</update>
+	
+	<update id="cancleApln" parameterType="AplnVO">
+		UPDATE APLN
+		   SET APLN_STAT = 'APST99'
+		 WHERE DOC_NO = #{no}
+	</update>
+</mapper>

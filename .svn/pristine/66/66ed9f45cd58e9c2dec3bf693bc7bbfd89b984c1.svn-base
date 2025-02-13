@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.channelboard.service.IChannelNoticeMapper">
+	
+	<resultMap type="ThreadBoardVO" id="chNoticeMap">
+		<id property="brdNo" column="BRD_NO"/>
+		<result property="rnum"  column="RNUM"/>
+		<result property="brdNo" column="BRD_NO" />
+		<result property="thNo" column="TH_NO" />
+		<result property="chNo" column="CH_NO" />
+		<result property="brdTtl" column="BRD_TTL" />
+		<result property="brdWrtr" column="BRD_WRTR" />
+		<result property="brdConts" column="BRD_CONTS" />
+		<result property="brdRgdt" column="BRD_RGDT" />
+		<result property="brdHit" column="BRD_HIT" />
+		<result property="tmp" column="TMP" />
+		<result property="gubun" column="GUBUN"/>
+		<result property="brdAtchFileId" column="BRD_ATCH_FILE_ID" />
+		<result property="memPrflimg" column="MEM_PRFLIMG" />
+		<result property="thTtl" column="TH_TTL" />
+		<result property="thPw" column="TH_PW" />
+		<result property="thRgdt" column="TH_RGDT" /> 
+		<result property="thClr" column="TH_CLR" />
+		<result property="brdWrtrNm" column="MEM_NAME" />
+	</resultMap>
+	
+	<insert id="chNtcInsert" parameterType="ChannelBoardVO" useGeneratedKeys="true">
+		
+		<selectKey keyProperty="brdNo" resultType="int" order="BEFORE">
+			select seq_board.nextval from dual
+		</selectKey>
+		
+		INSERT INTO board (
+		    brd_no,
+		    brd_wrtr,
+		    brd_conts,
+		    brd_rgdt, 
+		    brd_hit, 
+		    ch_no,
+		    th_no,
+		    brd_ttl,
+		    GUBUN
+	) values (
+	    #{brdNo}, #{brdWrtr}, #{brdConts}, sysdate, #{brdHit}, #{chNo}, 0, #{brdTtl},'N'
+	)
+		
+	</insert>
+	
+	<select id="chNtcList" parameterType="PagingVO" resultMap="chNoticeMap">
+		SELECT * 
+		FROM
+			(SELECT TO_NUMBER(rownum) rnum, A.*
+			FROM
+				(SELECT 	
+					b.BRD_NO, b.BRD_WRTR, b.BRD_CONTS, b.BRD_ATCH_FILE_ID, b.BRD_RGDT, b.BRD_HIT,
+					b.CH_NO, b.TH_NO, b.BRD_TTL, b.GUBUN,
+					t.TH_TTL, t.TH_CLR, m.MEM_NAME
+				FROM BOARD B
+				    LEFT OUTER JOIN CHANNEL_THREAD T ON B.TH_NO = T.TH_NO
+				    LEFT OUTER JOIN MEMBER M ON B.BRD_WRTR = M.MEM_NO
+				WHERE
+				    B.CH_NO= #{chNo}
+				    AND B.TH_NO = 0
+				    AND B.GUBUN='N'
+				<if test="brdSearchWord != null and brdSearchWord !=''">
+					AND B.BRD_TTL LIKE '%' || #{brdSearchWord} || '%'
+				</if>
+				ORDER BY
+					b.BRD_RGDT DESC) A 
+				) B
+		WHERE 1=1
+		<![CDATA[ AND B.RNUM >= #{rowCnt} * (#{page}-1) + 1 AND B.RNUM <= #{rowCnt} * #{page}]]>
+	</select>
+	
+	<select id="chNtcSelect" parameterType="int">
+		select
+			b.brd_no
+			, b.brd_wrtr
+			, b.brd_conts
+			, b.brd_rgdt
+			, b.brd_hit
+			, b.brd_ttl
+			, b.ch_no
+			, b.th_no
+			, m.mem_name
+		from
+			board b
+		join
+			member m on b.brd_wrtr = m.mem_no
+		where b.brd_no = #{brdNo}
+	</select>
+	
+	<select id="chNtcTotal" parameterType="PagingVO" resultType="int">
+		SELECT 
+			COUNT(*) 
+		FROM
+			BOARD b
+		JOIN
+			CHANNEL_THREAD ct ON b.TH_NO = ct.TH_NO
+		JOIN
+			MEMBER m ON b.BRD_WRTR = m.MEM_NO
+		WHERE
+			b.TH_NO = 0
+			AND b.GUBUN = 'N'
+			AND b.CH_NO = #{chNo}
+		ORDER BY
+			b.BRD_RGDT DESC
+	</select>
+	
+	<select id="getChTtl" parameterType="int" resultType="string">
+		SELECT CH_TTL FROM CHANNEL
+		WHERE CH_NO = #{chNo}
+	</select>
+	
+	<update id="incrementNtcHit" parameterType="int">
+		update board
+		set
+			brd_hit = brd_hit + 1
+		where brd_no = #{brdNo}
+	</update>
+	
+	<update id="chNtcUpdate" parameterType="ChannelBoardVO">
+		Update board
+		set
+			brd_ttl = #{brdTtl},
+			brd_conts = #{brdConts}
+		where
+			brd_no = #{brdNo}
+	</update>
+	
+	<delete id="deleteChNtc" parameterType="ChannelBoardVO">
+		delete from board
+		where brd_no = #{brdNo}
+	</delete>
+	
+</mapper>

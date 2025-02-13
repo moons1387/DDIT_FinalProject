@@ -1,0 +1,12 @@
+package kr.or.ddit.vo;
+
+import lombok.Data;
+
+@Data
+public class subAgreeVO { 	//구독VO(플랜)
+
+	private int memNo; 	 	//맴버번호
+	private int planNo;  	//플랜번호
+	private int chNo;	 	//채널번호
+	private int subDlyn; 	//정기결제
+}

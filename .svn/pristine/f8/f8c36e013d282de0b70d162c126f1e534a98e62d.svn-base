@@ -1,0 +1,17 @@
+package kr.or.ddit.components.chatting.vo;
+
+import lombok.Data;
+
+@Data
+public class ChattingGroupVO {
+	private int groupNo;
+	private int memNo;
+	private String groupTitle;
+	private String groupDate;
+	private int chattingFileId;
+	private String groupImg;
+	
+	//DB에는 없음 스터디장설정 위한 변수
+	private String authRole;
+	private String msgId;
+}

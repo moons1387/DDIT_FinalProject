@@ -1,0 +1,423 @@
+let driveChannelList;
+let driveThreadList;
+let driveList;
+
+$(document).on('click', '#drive', function () {
+
+  let data = {
+    memNo: MEM_NO
+  }
+
+
+
+  $.ajax({
+    url: "/synerhub/drive/getList",
+    type: "post",
+    beforeSend: function (xhr) {
+      xhr.setRequestHeader(header, token);
+    },
+    data: JSON.stringify(data),
+    contentType: "application/json; charset=utf-8",
+    success: async function (res) {
+      console.log(res.chList);
+      console.log(res.thList);
+      driveChannelList = res.chList;
+      driveThreadList = res.thList;
+
+      driveLoad(driveChannelList, driveThreadList);
+      console.log(driveChannelList);
+      console.log(driveThreadList);
+    }
+  })
+
+
+
+});
+
+
+function driveLoad(channelList, threadList) {
+  var html = "";
+
+  html += `
+
+		<div class="mb-3 overflow-hidden position-relative">
+            <div class="px-3">
+              <h4 class="fs-6 mb-0">드라이브</h4>
+              <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                  <li class="breadcrumb-item">
+                    <a href="../main/index.html">Home</a>
+                  </li>
+                  <li class="breadcrumb-item" aria-current="page">Drive</li>
+                </ol>
+              </nav>
+            </div>
+          </div>
+
+          <div class="card overflow-hidden chat-application">
+            <div class="d-flex align-items-center justify-content-between gap-6 m-3 d-lg-none">
+              <button class="btn btn-primary d-flex" type="button" data-bs-toggle="offcanvas" data-bs-target="#chat-sidebar" aria-controls="chat-sidebar">
+                <i class="ti ti-menu-2 fs-5"></i>
+              </button>
+              <form class="position-relative w-100">
+                <input type="text" class="form-control search-chat py-2 ps-5" id="text-srh" placeholder="Search Contact">
+                <i class="ti ti-search position-absolute top-50 start-0 translate-middle-y fs-6 text-dark ms-3"></i>
+              </form>
+            </div>
+            <div class="d-flex w-100">
+              <div class="left-part border-end w-20 flex-shrink-0 d-none d-lg-block">
+                <div class="px-9 pt-4 pb-3">
+                  <button class="btn btn-primary fw-semibold py-8 w-100"><i class="ti ti-upload me-2"></i>파일 업로드</button>
+                </div>
+                <div class="accordion" id="accordionExample">
+                    <div class="accordion-item">
+                      <h2 class="accordion-header" id="headingOne">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                          <i class="ti ti-bookmark fs-5 text-primary"></i>채널 저장소
+                        </button>
+                      </h2>
+                      <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">`;
+  for (let i = 0; i < channelList.length; i++) {
+    html += `<div class="accordion-body channel" style="cursor: pointer;" id="${channelList[i].chNo}">`
+    html += channelList[i].chTtl;
+    html += `</div>`
+  }
+  html += `</div>
+                    </div>
+                    <div class="accordion-item">
+                      <h2 class="accordion-header" id="headingTwo">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                           <i class="ti ti-bookmark fs-5 text-warning"></i>스레드 저장소
+                        </button>
+                      </h2>
+                      <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">`;
+  for (let i = 0; i < threadList.length; i++) {
+    html += `<div class="accordion-body thread" style="cursor: pointer;" id="${threadList[i].chMemThNo}">`
+    html += threadList[i].thTtl;
+    html += `</div>`
+  }
+  html += `</div>
+                    </div>
+                    <div class="accordion-item">
+                      <h2 class="accordion-header" id="headingThree">
+                          <div class="accordion-body my" style="cursor: pointer; font-size: .9rem; font-weight: 400;" id="${MEM_NO}">
+                           <i class="ti ti-bookmark fs-5 text-success"></i>나의 저장소
+                          </div>
+                      </h2>
+                      <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
+                        <div class="accordion-body" style="cursor: pointer;">
+                          채널1
+                        </div>
+                      </div>
+                    </div>
+                </div>
+              </div>
+              <div class="d-flex w-100"  style="height: 500px;">
+                <div style="min-width: 600px;">
+                  <div class="border-end user-chat-box h-100">
+                    <div class="px-4 pt-9 pb-6 d-none d-lg-flex">
+                      <form class="position-relative">
+                        <input type="text" class="form-control search-chat py-2 ps-5" id="text-srh" placeholder="Search" />
+                        <i class="ti ti-search position-absolute top-50 start-0 translate-middle-y fs-6 text-dark ms-3"></i>
+                      </form>
+
+                      <div class="ms-auto">
+                        <ul class="list-unstyled mb-0 d-flex align-items-center">
+                          <li class="position-relative" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="다운로드">
+                            <a class="text-dark px-3 fs-5 bg-hover-primary nav-icon-hover position-relative z-index-5" id="selectFileDownLoad">
+                              <i class="ti ti-download fs-7"></i>
+                            </a>
+                          </li>
+                          <li class="position-relative" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="이동">
+                            <a class="text-dark px-3 fs-5 bg-hover-primary nav-icon-hover position-relative z-index-5" href="javascript:void(0)">
+                              <i class="ti ti-file-arrow-right fs-7"></i>
+                            </a>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                    <div class="app-chat">
+                      <ul class="chat-users mh-n100" data-simplebar>
+                        <li>
+                          <div class="d-flex gap-3 my-3">
+                            <div class="n-chk align-self-center text-center ms-4">
+                              <div class="form-check">
+                                <input type="checkbox" class="form-check-input primary" id="contact-check-all" />
+                                <label class="form-check-label" for="contact-check-all"></label>
+                                <span class="new-control-indicator"></span>
+                              </div>
+                            </div>
+                            <div>종류</div>
+                            <div class="ms-5 me-5">이름</div>
+                            <div class="me-5" style="margin-left: 60px;">크기</div>
+                            <div>작성자</div>
+                            <div class="ms-auto me-5">등록일</div>
+                          </div>
+                        </li>
+                        <div id="selectedFileList">
+                            <div class="d-flex align-items-center justify-content-center pb-5" style="height: 360px;">
+	                          	드라이브 저장소를 선택해주세요.
+	                        </div>
+                        </div>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                <div class="w-100">
+                  <div class="chat-container h-100 w-100">
+                    <div class="chat-box-inner-part h-100">
+                      <div class="chatting-box app-email-chatting-box">
+                        <div class="p-9 py-3 border-bottom chat-meta-user d-flex align-items-center justify-content-between">
+                          <h5 class="text-dark mb-0 fs-5">파일 상세</h5>
+                          <ul class="list-unstyled mb-0 d-flex align-items-center">
+                            <li class="position-relative" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="즐겨찾기">
+                              <a class="text-dark px-2 fs-5 bg-hover-primary nav-icon-hover position-relative z-index-5" href="javascript:void(0)">
+                                <i class="ti ti-star"></i>
+                              </a>
+                            </li>
+                          </ul>
+                        </div>
+                        <div class="position-relative overflow-hidden">
+                          <div class="position-relative">
+                            <div class="chat-box email-box mh-n100 p-9" data-simplebar="init" id="fileDetailList">
+                              파일을 선택해주세요
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="offcanvas offcanvas-start user-chat-box" tabindex="-1" id="chat-sidebar" aria-labelledby="offcanvasExampleLabel">
+                <div class="offcanvas-header">
+                  <h5 class="offcanvas-title" id="offcanvasExampleLabel"> Contact </h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                </div>
+                <div class="px-9 pt-4 pb-3">
+                  <button class="btn btn-primary fw-semibold py-8 w-100">Add New Contact</button>
+                </div>
+                <ul class="list-group h-n150" data-simplebar>
+                  <li class="list-group-item border-0 p-0 mx-9">
+                    <a class="d-flex align-items-center gap-6 list-group-item-action text-dark px-3 py-8 mb-1 rounded-1" href="javascript:void(0)">
+                      <i class="ti ti-inbox fs-5"></i>All Contacts
+                    </a>
+                  </li>
+                  <li class="list-group-item border-0 p-0 mx-9">
+                    <a class="d-flex align-items-center gap-6 list-group-item-action text-dark px-3 py-8 mb-1 rounded-1" href="javascript:void(0)">
+                      <i class="ti ti-star"></i>Starred
+                    </a>
+                  </li>
+                  <li class="list-group-item border-0 p-0 mx-9">
+                    <a class="d-flex align-items-center gap-6 list-group-item-action text-dark px-3 py-8 mb-1 rounded-1" href="javascript:void(0)">
+                      <i class="ti ti-file-text fs-5"></i>Pening Approval
+                    </a>
+                  </li>
+                  <li class="list-group-item border-0 p-0 mx-9">
+                    <a class="d-flex align-items-center gap-6 list-group-item-action text-dark px-3 py-8 mb-1 rounded-1" href="javascript:void(0)">
+                      <i class="ti ti-alert-circle"></i>Blocked
+                    </a>
+                  </li>
+                  <li class="border-bottom my-3"></li>
+                  <li class="fw-semibold text-dark text-uppercase mx-9 my-2 px-3 fs-2">CATEGORIES</li>
+                  <li class="list-group-item border-0 p-0 mx-9">
+                    <a class="d-flex align-items-center gap-6 list-group-item-action text-dark px-3 py-8 mb-1 rounded-1" href="javascript:void(0)">
+                      <i class="ti ti-bookmark fs-5 text-primary"></i>Engineers
+                    </a>
+                  </li>
+                  <li class="list-group-item border-0 p-0 mx-9">
+                    <a class="d-flex align-items-center gap-6 list-group-item-action text-dark px-3 py-8 mb-1 rounded-1" href="javascript:void(0)">
+                      <i class="ti ti-bookmark fs-5 text-warning"></i>Support Staff
+                    </a>
+                  </li>
+                  <li class="list-group-item border-0 p-0 mx-9">
+                    <a class="d-flex align-items-center gap-6 list-group-item-action text-dark px-3 py-8 mb-1 rounded-1" href="javascript:void(0)">
+                      <i class="ti ti-bookmark fs-5 text-success"></i>Sales Team
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+    
+    `;
+  $("#main_contents").html(html);
+}
+
+var driveNo = -1;
+
+$(document).on("click", ".accordion-body", function () {
+
+  let chNo = 0;
+  let thNo = 0;
+  let memNo = 0;
+
+  if (driveNo == $(this).attr("id")) {
+    return;
+  } else if ($(this).hasClass("channel") === true) {
+    driveNo = $(this).attr("id");
+    chNo = $(this).attr("id")
+    console.log("channel" + chNo);
+  } else if ($(this).hasClass("thread") === true) {
+    driveNo = $(this).attr("id");
+    thNo = $(this).attr("id")
+    console.log("thread" + thNo);
+  } else if ($(this).hasClass("my") === true) {
+    driveNo = $(this).attr("id");
+    memNo = $(this).attr("id")
+    console.log("my");
+  } else {
+    return;
+  }
+
+  let data = {
+    "chNo": chNo,
+    "chMemThNo": thNo,
+    "memNo": memNo
+  }
+
+
+  $.ajax({
+    url: "/synerhub/drive/getFileList",
+    type: "post",
+    beforeSend: function (xhr) {
+      xhr.setRequestHeader(header, token);
+    },
+    data: JSON.stringify(data),
+    contentType: "application/json; charset=utf-8",
+    success: async function (res) {
+      driveList = null;
+      driveList = res;
+      console.log(res);
+      let selectedFileList = $(document).find("#selectedFileList");
+      selectedFileList.html("");
+      let html = ""
+      for (let i = 0; i < res.length; i++) {
+        html += `<li>
+                  <a href="javascript:void(0)" class="px-4 py-3 bg-hover-light-black d-flex align-items-center chat-user" id="chat_user_1" data-user-id="${res[i].atchDetailFileId}">
+                    <div class="n-chk align-self-center text-center me-2" onclick="event.stopPropagation();">
+                      <div class="form-check">
+                        <input type="checkbox" class="form-check-input contact-chkbox primary" id="selectDriveFileCkb" />
+                        <label class="form-check-label" for="checkbox1"></label>
+                      </div>
+                    </div>
+                    <span class="position-relative me-3">
+                      <div style="width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; border-radius: 50%; background-color: #f0f0f0;">`;
+        if (checkImageType(res[i].atchFileExtn)) {
+          html += `<i class="ti ti-photo" style="font-size: 20px;"></i>`
+        } else {
+          html += `<i class="ti ti-file" style="font-size: 20px;"></i>`
+        }
+        html += `</div>
+                    </span>
+                    <div class="ms-6 d-inline-block" style="width: 33%;">
+                      <h6 class="mb-1 fw-semibold chat-title" data-username="James Anderson">${res[i].atchFileOrgnlNm}
+                      </h6>
+                      <div class="progress" style="height: 10px; width: 150px;">
+                        <div class="progress-bar progress-bar-striped text-bg-primary progress-bar-animated" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%">
+                          75%
+                        </div>
+                      </div>
+                    </div>
+                    <div class="me-5">
+                      ${Math.ceil(res[i].atchFileSize / 10000)} MB
+                    </div>
+                    <div class="ms-2 me-5">
+                      ${res[i].memName}
+                    </div>
+                    <div>
+                      ${res[i].strDt}
+                    </div>
+                  </a>
+                </li>`
+      }
+      selectedFileList.html(html);
+
+
+      let fileDetailList = $(document).find("#fileDetailList");
+      fileDetailList.html("");
+      html = "";
+      for (let i = 0; i < res.length; i++) {
+        //   for (let j = 0; j < )
+        if (i == 0) {
+          html += `<div class="chat-list chat active-chat" data-user-id="${res[i].atchDetailFileId}">`;
+        } else {
+          html += `<div class="chat-list chat" data-user-id="${res[i].atchDetailFileId}">`;
+        }
+        html += `<div class="hstack align-items-start mb-7 pb-1 align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                      <div style="width: 72px; height: 72px; display: flex; justify-content: center; align-items: center; border-radius: 50%; background-color: #f0f0f0;">
+                        <i class="ti ti-file" style="font-size: 36px;"></i>
+                      </div>
+                      <div>
+                        <h6 class="fs-4 mb-0">${res[i].atchFileOrgnlNm}</h6>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-4 mb-7">
+                      <p class="mb-1 fs-2">유형</p>
+                      <h6 class="fw-semibold mb-0">${res[i].atchFileExtn}</h6>
+                    </div>
+                    <div class="col-8 mb-7">
+                      <p class="mb-1 fs-2">크기</p>
+                      <h6 class="fw-semibold mb-0">${Math.ceil(res[i].atchFileSize / 10000)} MB</h6>
+                    </div>
+                    <div class="col-12 mb-9">
+                      <p class="mb-1 fs-2">위치</p>
+                      <h6 class="fw-semibold mb-0">/내폴더/직박구리/현진짱123</h6>
+                    </div>
+                    <div class="col-6 mb-7">
+                      <p class="mb-1 fs-2">생성 날짜</p>
+                      <h6 class="fw-semibold mb-0">${res[i].atchFileRegDtStr}</h6>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center gap-6 justify-content-center">
+                    <button class="btn bg-danger-subtle text-danger" style="width: 120%;" fdprocessedid="83zpb">삭제</button>
+                    <button class="btn btn-primary" style="width: 120%;" fdprocessedid="pk6kl8">수정</button>
+                  </div>
+                </div>`
+      }
+      fileDetailList.html(html);
+    }
+  })
+});
+
+function checkImageType(fileName) {
+  var pattern = /jpg|gif|png|jepg/i;
+  return fileName.match(pattern);
+}
+
+$(document).on("change", '#contact-check-all', function () {
+  var isChecked = $(this).is(':checked');
+  // 모든 체크박스의 체크 상태 변경
+  $('.contact-chkbox').prop('checked', isChecked).trigger('change');
+});
+
+$(document).on("click", "#selectFileDownLoad", function () {
+  let options = $(document).find($("input[id=selectDriveFileCkb]:checked"));
+  for (let i = 0; i < options.length; i++) {
+    let id = options.eq(i).parents(".chat-user").attr("data-user-id");
+    for (let j = 0; j < driveList.length; j++) {
+      if (driveList[j].atchDetailFileId == id) {
+        download_file(driveList[j].atchFilePath, driveList[j].atchFileOrgnlNm);
+      }
+    }
+  }
+
+  console.log(options.parents(".chat-user"));
+})
+
+function download_file(url, fileName) {
+  console.log(contextPath+url);
+  console.log(fileName);
+  const element = document.createElement('a');
+  element.href = contextPath+url;
+  element.download = fileName;
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
+}
+
+

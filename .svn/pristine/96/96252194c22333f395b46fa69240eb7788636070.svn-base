@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.drive.service.IDriveMapper"> 
+
+	<select id="getChList" parameterType="ChannelMemberVO" resultType="ChannelMemberVO">
+		SELECT
+		        ch.ch_no
+		    ,   ch.ch_ttl
+		FROM
+		    channel_member chm, channel ch
+		where chm.ch_no = ch.ch_no
+		and chm.mem_no = #{memNo}
+	</select>
+	
+	<select id="getThList" parameterType="ChannelMemberVO" resultType="ChannelMemberVO">
+		SELECT
+		        ch.ch_no
+		    ,   chm.ch_mem_th_no
+		    ,   cht.th_ttl
+		FROM
+		    channel_member chm, channel ch, channel_thread cht
+		where chm.ch_no = ch.ch_no
+		and cht.ch_no = chm.ch_no
+		and ch.ch_no = cht.ch_no
+		and cht.th_no = chm.ch_mem_th_no
+		and chm.mem_no = #{memNo}
+	</select>
+	
+	<select id="getFileList" parameterType="ChannelMemberVO" resultType="AtchFileDetailVO">
+		SELECT
+		    cld_no
+		  , cld_file_no
+		  , to_char(cld_rgdt , 'YYYY.MM.DD') str_dt
+		  , atd.*
+		  , to_char(atd.atch_file_regdt, 'YYYY.MM.DD') atch_file_reg_dt_str
+		  , m.mem_name
+		FROM
+		    cloud cld , atch_file_detail atd, member m
+		where cld.cld_file_no=atd.atch_detail_file_id
+		    and cld.mem_no = m.mem_no
+	    <if test="chNo != 0">
+	   		and cld.ch_no = #{chNo}
+	    </if>
+	    <if test="chMemThNo != 0">
+	    	and cld.th_no = #{chMemThNo}
+	    </if>
+	    <if test="memNo != 0">
+	    	and cld.mem_no = #{memNo}
+	    	and (cld.ch_no is null and cld.th_no is null)
+	    </if>
+	    ORDER BY cld.cld_rgdt desc
+	</select>
+
+</mapper>

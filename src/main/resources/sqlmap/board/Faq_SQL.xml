@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.board.faq.service.IFaqMapper">
+	
+	<resultMap type="FaqVO" id="faqMap">
+		<id property="faqNo" column="faq_no"/>
+		<result property="faqNo" column="faq_no" />
+		<result property="faqCategory" column="faq_category" />
+		<result property="faqTtl" column="faq_ttl" />
+		<result property="faqConts" column="faq_conts" />
+		<result property="faqWtr" column="faq_wtr" />
+		<result property="faqAtchFileId" column="faq_atch_file_id" />
+	</resultMap>
+
+
+	<select id="faqList" resultMap="faqMap">
+		SELECT
+		    faq_no
+		   ,faq_category
+		   ,faq_ttl
+		   ,faq_conts
+		   ,faq_wtr
+		   ,faq_atch_file_id
+		FROM
+		    faq
+		ORDER BY 
+			faq_category asc, faq_no asc
+	</select>
+	
+	
+	<insert id="insertFaq" parameterType="FaqVO" useGeneratedKeys="true">
+		<selectKey keyProperty="faqNo" resultType="int" order="BEFORE">
+			select seq_faq.nextval from dual
+		</selectKey>
+		INSERT INTO faq (
+		    faq_no
+		   ,faq_category
+		   ,faq_ttl
+		   ,faq_conts
+		   ,faq_wtr
+		   ,faq_atch_file_id
+		) VALUES (
+		    #{faqNo}
+		   ,#{faqCategory}
+		   ,#{faqTtl}
+		   ,#{faqConts}
+		   ,#{faqWtr}
+		   ,#{faqAtchFileId}
+		)
+	</insert>
+	
+	
+	<select id="selectFaq" parameterType="int" resultMap="faqMap">
+		SELECT
+		    faq_no
+		   ,faq_category
+		   ,faq_ttl
+		   ,faq_conts
+		   ,faq_wtr
+		   ,faq_atch_file_id
+		FROM
+		    faq
+		WHERE
+			faq_no = #{faqNo}
+	</select>
+	
+	
+	<update id="updateFaq" parameterType="FaqVO">
+	    update faq
+	    set
+	        faq_category = #{faqCategory},
+	        faq_ttl = #{faqTtl},
+	        faq_conts = #{faqConts},
+	        faq_wtr = #{faqWtr}
+	    where 
+	        faq_no = #{faqNo}
+	</update>
+
+
+	<delete id="deleteFaq" parameterType="int">
+		delete from faq
+		where faq_no = #{faqNo}
+	</delete>
+	
+</mapper>

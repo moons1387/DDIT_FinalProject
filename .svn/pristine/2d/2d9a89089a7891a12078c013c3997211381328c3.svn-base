@@ -1,0 +1,31 @@
+package kr.or.ddit.components.admin.channel.service.impl;
+
+import java.util.List;
+
+import javax.inject.Inject;
+
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Service;
+
+import kr.or.ddit.components.admin.channel.service.IChannelAccountingMapper;
+import kr.or.ddit.components.admin.channel.service.IChannelAccountingService;
+import kr.or.ddit.components.admin.channel.vo.ChannelDataVO;
+
+@Primary
+@Service
+public class ChannelAccountingServiceImpl implements IChannelAccountingService {
+
+	@Inject
+	private IChannelAccountingMapper mapper;
+	
+	@Override
+	public int getChTotal() {
+		return mapper.getChTotal();
+	}
+
+	@Override
+	public List<ChannelDataVO> getChList() {
+		return mapper.getChList();
+	}
+
+}

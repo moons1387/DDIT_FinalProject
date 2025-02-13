@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.plan.service.IPlanMapper">
+	
+	<resultMap type="PlanVO" id="PlanMap">
+		<id property="planNo" column="plan_no"/>
+		<result property="planNo" column="plan_no" />
+		<result property="planNm" column="plan_nm" />
+		<result property="planPrc" column="plan_prc" />
+		<result property="planMaxMem" column="plan_max_mem" />
+		<result property="planTotSz" column="plan_tot_sz" />
+		<result property="url" column="plan_pic" />
+		<collection property="ExpList" resultMap="PlanExpMap"/>
+	</resultMap>
+	
+	<resultMap type="PlanExpVO" id="PlanExpMap">
+		<result property="planIntrNo" column="plan_intrno" />
+		<result property="planNo" column="plan_no" />
+		<result property="planIntr" column="plan_intr" />
+		<result property="planCateNm" column="plan_cate" />
+		<result property="planUse" column="plan_use" />
+	</resultMap>
+	
+	<select id="list" resultMap="PlanMap" parameterType="int" >
+		select
+			p.plan_no
+			, plan_nm
+			, plan_prc
+			, plan_max_mem
+			, plan_tot_sz
+			, plan_intrno
+			, plan_intr
+			, plan_pic
+			, plan_use
+			, plan_cate
+		from 
+			plan p, plan_exp e
+		where 1=1
+			and p.plan_no = e.plan_no
+		<if test="planNo != 0">
+			and p.plan_no = #{planNo}
+		</if>
+			AND E.PLAN_DELYN='N'
+		order by e.plan_intrno
+	</select>
+
+	<select id="planExpList" resultMap="PlanExpMap">
+		SELECT 
+		    PLAN_INTRNO
+		    , PLAN_NO
+		    , PLAN_INTR
+		    , PLAN_USE
+		    , PLAN_CATE
+		FROM PLAN_EXP
+		WHERE
+			PLAN_DELYN='N'
+			NOT AND PLAN_CATE LIKE '용량'
+		ORDER BY 
+			PLAN_NO
+			, PLAN_INTRNO
+	</select>
+	
+	<select id="planCateName" resultType="PlanVO">
+		SELECT
+			PLAN_CATE planCateNm
+		FROM
+			PLAN_EXP
+		WHERE
+			PLAN_DELYN = 'N'
+		GROUP BY PLAN_CATE
+	</select>
+
+	<select id="buyChNo" resultType="PlanVO" parameterType="int" >
+		select 
+			nvl(max(plan_no), 0) plan_no 
+		from 
+			channel_plan 
+		where 
+			ch_no= #{chNo}
+			and rownum = 1
+			and plan_ccl = 1
+			and ccl_rsn is null
+			and paid_dt >= to_date(add_months(sysdate, -1))
+		group by paid_dt
+		order by paid_dt desc
+	</select> 
+
+
+	<select id="totalAmount" parameterType="String" resultType="int">
+		select
+			plan_prc	
+		from plan
+		where plan_nm = #{itemName}
+	</select>
+	
+	
+	<select id="setPlanNo" parameterType="String" resultType="int">
+		select plan_no
+		from plan
+		where plan_nm like '%'||#{planNm}||'%'
+	</select>
+	
+	
+	<insert id="ChannelPlanInsert" parameterType="ApproveResponseVO">
+		<selectKey keyProperty="paidNo" resultType="int" order="BEFORE">
+  			select seq_channel_plan.nextval from dual
+  		</selectKey>
+			INSERT INTO channel_plan (
+			    paid_no
+			    , paid_dt
+			    , plan_no
+			    , ch_no
+			    , plan_ccl
+			    , paid_tid
+			) VALUES (
+			    ${paidNo}
+			  , sysdate
+			  , #{planNo}
+			  , #{chNo}
+			  , 1
+			  , #{tid}
+			)
+	</insert>
+	
+	<insert id="paymentInsert" parameterType="ApproveResponseVO">
+		<selectKey keyProperty="pmntNo" resultType="int" order="BEFORE">
+  			select seq_payment.nextval from dual
+  		</selectKey>
+			INSERT INTO payment (
+			    pmnt_no
+			    , ch_no
+			    , pmnt_dt
+			    , pmnt_amnt
+			    , plan_nm
+			) VALUES (
+			    #{pmntNo}
+			  , #{memNo}
+			  , SYSDATE
+			  , #{totalAmount}
+			  , #{itemName}
+			)
+	</insert>
+		
+	<insert id="planMinuse" parameterType="ChannelPlanVO">
+    	<selectKey keyProperty="pmntNo" resultType="int" order="BEFORE">
+  			select seq_payment.nextval from dual
+  		</selectKey>
+			INSERT INTO payment (
+			    pmnt_no
+			    , ch_no
+			    , pmnt_dt
+			    , pmnt_amnt
+			    , plan_nm
+			) VALUES (
+			    #{pmntNo}
+			  , #{chNo}
+			  , SYSDATE
+			  , #{newPrc}
+			  , #{planNm}
+			)
+	</insert>	
+
+	<update id="delete" parameterType="ChannelPlanVO">
+    	UPDATE channel_plan 
+		SET
+		    PAID_DT = SYSDATE,
+		    plan_ccl = 0,
+		    ccl_rsn = #{cclRsn}
+		WHERE ch_no = #{chNo}
+		and plan_ccl = 1
+		and ccl_rsn is null
+	</update>	
+	
+	<update id="update" parameterType="int">
+		UPDATE channel_plan
+		set
+		    plan_ccl = 1
+		    , ccl_rsn = '멤버십 변경'
+		where
+		    ch_no=#{chNo}
+		    and plan_ccl=1
+		    and ccl_rsn is null
+	</update>
+	
+	<select id="chplantCnt" resultType="int">
+		select
+			count(*)
+		from
+			channel_plan
+	</select>
+	
+	<select id="getPrice" parameterType="int" resultType="ApproveResponseVO">
+		select 
+			p.plan_prc totalAmount, chp.paid_tid tid
+		from 
+			channel_plan chp, plan p
+		where 
+            chp.plan_no=p.plan_no
+            and chp.ch_no= #{chNo}
+			and rownum = 1
+			and chp.plan_ccl = 1
+            and chp.paid_dt >= to_date(add_months(sysdate, -1))
+			order by chp.paid_dt desc
+	</select>
+	
+	<select id="newPrc" parameterType="int" resultType="ChannelPlanVO">
+		select
+			plan_prc newPrc, plan_nm planNm 	
+		from plan
+		where plan_no = #{planNo}
+	</select>
+
+
+	<select id="changePrc" parameterType="int" resultType="ChannelPlanVO">
+		SELECT
+            P.PLAN_NM planNm, P.PLAN_PRC newPrc, CP.CH_NO chNo
+        FROM
+            PLAN P, CHANNEL_PLAN CP
+        WHERE
+            P.PLAN_NO=CP.PLAN_NO
+            AND CP.CH_NO=#{chNo}
+            AND PLAN_CCL=1
+            AND CCL_RSN IS NULL
+	</select>
+	
+	<select id="adminMemShipList" resultType="PlanVO">
+		SELECT
+			PLAN_PIC url
+			, P.PLAN_NM planNm
+			, COUNT(*) planCnt
+            , TO_CHAR(PLAN_PRC,'L999,999,999') planPrice
+            , TO_CHAR(NVL(SUM(PMNT_AMNT), 0),'L999,999,999') PlanIOExp
+			, NVL(SUM(PMNT_AMNT), 0) TotalPrice
+		FROM 
+			PLAN P
+		FULL OUTER JOIN PAYMENT PT ON PT.PLAN_NM = P.PLAN_NM
+		GROUP BY 
+			PLAN_PRC
+			, P.PLAN_NO
+			, P.PLAN_NM
+			, PLAN_PIC
+		ORDER BY P.PLAN_NO
+	</select>
+	
+	<select id="AdminTotalAmount" resultType="String">
+		SELECT 
+			TO_CHAR(NVL(SUM(PMNT_AMNT), 0),'L999,999,999') TotalPrice
+		FROM 
+			PAYMENT
+	</select>
+	
+	<insert id="AdminBzPlanInsert" parameterType="PlanVO">
+		<selectKey keyProperty="planNo" resultType="int" order="BEFORE">
+  			select SEQ_PLAN_EXP.nextval from dual
+  		</selectKey>
+		INSERT INTO plan_exp (
+		    plan_intrno
+		    , plan_no
+		    , plan_intr
+		    , plan_use
+		    , plan_cate
+		) VALUES (
+		  #{planNo}  
+		  , 1
+		  , #{bzInput}
+		  , 'true'
+		  , #{planCateNm}
+		)
+	</insert>
+	<insert id="AdminSvPlanInsert" parameterType="PlanVO">
+		<selectKey keyProperty="planNo" resultType="int" order="BEFORE">
+  			select SEQ_PLAN_EXP.nextval from dual
+  		</selectKey>
+		INSERT INTO plan_exp (
+		    plan_intrno
+		    , plan_no
+		    , plan_intr
+		    , plan_use
+		    , plan_cate
+		) VALUES (
+		  #{planNo}  
+		  , 2
+		  , #{svInput}
+		  , 'true'
+		  , #{planCateNm}
+		)
+	</insert>
+	<insert id="AdminGdPlanInsert" parameterType="PlanVO">
+		<selectKey keyProperty="planNo" resultType="int" order="BEFORE">
+  			select SEQ_PLAN_EXP.nextval from dual
+  		</selectKey>
+		INSERT INTO plan_exp (
+		    plan_intrno
+		    , plan_no
+		    , plan_intr
+		    , plan_use
+		    , plan_cate
+		) VALUES (
+		  #{planNo}  
+		  , 3
+		  , #{gdInput}
+		  , 'true'
+		  , #{planCateNm}
+		)
+	</insert>
+	
+	<insert id="AdminBzCheckInsert" parameterType="PlanVO">
+		<selectKey keyProperty="planNo" resultType="int" order="BEFORE">
+  			select SEQ_PLAN_EXP.nextval from dual
+  		</selectKey>
+		INSERT INTO plan_exp (
+		    plan_intrno
+		    , plan_no
+		    , plan_use
+		    , plan_cate
+		) VALUES (
+		  #{planNo}  
+		  , 1
+		  , #{bzCheck}
+		  , #{planCateNm}
+		)
+	</insert>
+	
+	<insert id="AdminSvCheckInsert" parameterType="PlanVO">
+		<selectKey keyProperty="planNo" resultType="int" order="BEFORE">
+  			select SEQ_PLAN_EXP.nextval from dual
+  		</selectKey>
+		INSERT INTO plan_exp (
+		    plan_intrno
+		    , plan_no
+		    , plan_use
+		    , plan_cate
+		) VALUES (
+		  #{planNo}  
+		  , 2
+		  , #{svCheck}
+		  , #{planCateNm}
+		)
+	</insert>
+	
+	<insert id="AdminGdCheckInsert" parameterType="PlanVO">
+		<selectKey keyProperty="planNo" resultType="int" order="BEFORE">
+  			select SEQ_PLAN_EXP.nextval from dual
+  		</selectKey>
+		INSERT INTO plan_exp (
+		    plan_intrno
+		    , plan_no
+		    , plan_use
+		    , plan_cate
+		) VALUES (
+		  #{planNo}  
+		  , 3
+		  , #{gdCheck}
+		  , #{planCateNm}
+		)
+	</insert>
+	
+	<update id="AdminBzPlanUpdate" parameterType="PlanVO">
+		UPDATE plan_exp
+		SET
+			plan_intr = #{bzInput}
+		WHERE
+			plan_intrno = #{bzNo}
+	</update>
+	
+	<update id="AdminSvPlanUpdate" parameterType="PlanVO">
+		UPDATE plan_exp
+		SET
+			plan_intr = #{svInput}
+		WHERE
+			plan_intrno = #{svNo}
+	</update>
+	
+	<update id="AdminGdPlanUpdate" parameterType="PlanVO">
+		UPDATE plan_exp
+		SET
+			plan_intr = #{gdInput}
+		WHERE
+			plan_intrno = #{gdNo}
+	</update>
+	
+	<update id="AdminBzCheckUpdate" parameterType="PlanVO">
+		UPDATE plan_exp
+		SET
+			plan_use = #{bzCheck}
+		WHERE
+			plan_intrno = #{bzNo}
+	</update>
+	
+	<update id="AdminSvCheckUpdate" parameterType="PlanVO">
+		UPDATE plan_exp
+		SET
+			plan_use = #{svCheck}
+		WHERE
+			plan_intrno = #{svNo}
+	</update>
+
+	<update id="AdminGdCheckUpdate" parameterType="PlanVO">
+		UPDATE plan_exp
+		SET
+			plan_use = #{gdCheck}
+		WHERE
+			plan_intrno = #{gdNo}
+	</update>
+	
+	<update id="AdminBzDelete" parameterType="PlanVO">
+		UPDATE plan_exp
+		SET
+			plan_delyn = 'Y'
+		WHERE
+			plan_intrno = #{bzNo}
+	</update>
+	
+	<update id="AdminSvDelete" parameterType="PlanVO">
+		UPDATE plan_exp
+		SET
+			plan_delyn = 'Y'
+		WHERE
+			plan_intrno = #{svNo}
+	</update>
+	
+	<update id="AdminGdDelete" parameterType="PlanVO">
+		UPDATE plan_exp
+		SET
+			plan_delyn = 'Y'
+		WHERE
+			plan_intrno = #{gdNo}
+	</update>
+</mapper>

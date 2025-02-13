@@ -1,0 +1,549 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.project.service.IProjectMapper">
+
+	<resultMap type="ProjectVO" id="ProjectMap">
+		<id property="pjtNo" column="PJT_NO"/>
+		<result property="rnum" column="RNUM"/>
+		<result property="pjtNm" column="PJT_NM"/>
+		<result property="thNo" column="TH_NO"/>
+		<result property="chNo" column="CH_NO"/>
+		<result property="docTtl" column="DOC_TTL"/>
+		<result property="conts" column="CONTS"/>
+		<result property="pjtMngr" column="PJT_MNGR"/>
+		<result property="strtDt" column="STRT_DT"/>
+		<result property="pjtStat" column="PJT_STAT"/>
+		<result property="atchFileId" column="ATCH_FILE_ID"/>
+		<result property="chMemNm" column="CH_MEM_NM"/>
+		<result property="mngrNm" column="MNGR_NM"/>
+		<result property="chMemNm" column="CH_MEM_NM"/>
+		<result property="pjtRgdt" column="PJT_RGDT"/>
+		<result property="pjtMngrNm" column="PJT_MNGR_NM"/>
+		<result property="fileCnt" column="FILE_CNT"/>
+		<collection property="pgmList" resultMap="GroupMemberMap"/>
+	</resultMap>
+	
+	<resultMap type="ProjectGroupMemberVO" id="GroupMemberMap">
+		<id property="groupMemNo" column="GROUP_MEM_NO"/>
+		<result property="groupNo" column="GROUP_NO"/>
+		<result property="memNo" column="MEM_NO"/>
+		<result property="chMemNm" column="CH_MEM_NM"/>
+		<result property="chRoleNm" column="CH_ROLE_NM"/>
+	</resultMap>
+
+	<resultMap type="ProjectDetailVO" id="pdMap">
+		<id property="pjtDtlNo" column="PJT_DTL_NO"/>
+		<result property="pjtWrkNm" column="PJT_WRK_NM"/>
+		<result property="pjtNote" column="PJT_NOTE"/>
+		<result property="memNo" column="MEM_NO"/>
+		<result property="memNo2" column="MEM_NO2"/>
+		<collection property="pdsList" resultMap="pdsMap"/>
+	</resultMap>
+	
+	<resultMap type="ProjectDetailSubWrkVO" id="pdsMap">
+		<id property="pdsNo" column="PDS_NO"/>
+		<result property="pdsConts" column="PDS_CONTS"/>
+		<result property="pdsRgdt" column="PDS_RGDT"/>
+	</resultMap>
+
+	<insert id="insertProject" parameterType="ProjectVO">
+
+		insert into project (
+		pjt_no, pjt_nm, pjt_mngr, est_dt_end, smry, conts, ch_no, th_no, doc_no)
+		)
+		values(
+		seq_pjt.nextval, #{pjtNm}, #{pjtMngr}, #{estDtEnd}, #{smry}, #{conts}, #{chNo},
+		#{thNo}, #{docNo}
+		)
+
+	</insert>
+
+	<select id="getTotal" resultType="int">
+		SELECT COUNT(*) 
+		  FROM 
+			   (SELECT ROWNUM RNUM, B.* 
+				  FROM		
+				   	   ( SELECT p.PJT_NM 
+						   FROM 	
+							    ( SELECT p.PJT_NO, ROUND(NVL(AVG(PRGRS), 0))||'%' PRGRS
+							         FROM PROJECT p
+							         LEFT OUTER JOIN PROJECT_DETAIL pd ON pd.PJT_NO = p.PJT_NO 
+							        WHERE p.CH_NO = #{synerhub1}
+							     GROUP BY p.PJT_NO 
+							     ORDER BY p.PJT_NO) A
+						    JOIN PROJECT p ON A.PJT_NO = p.PJT_NO
+						    JOIN DOCUMENT d ON p.DOC_NO = d.DOC_NO
+						    JOIN CHANNEL c ON c.CH_NO = p.CH_NO
+						    JOIN CHANNEL_MEMBER cm ON c.CH_NO = cm.CH_NO 
+						    					  AND cm.MEM_NO = p.PJT_MNGR
+						   WHERE 1 = 1
+						<if test="stat != null and stat != ''">
+							 AND p.PJT_STAT = #{stat}
+						</if>
+						<if test="searchTitle != null and searchTitle != ''">
+						     AND LOWER(p.PJT_NM) LIKE LOWER(#{searchTitle})
+						</if>
+						<if test="searchName != null and searchName != ''">
+						     AND LOWER(cm.CH_MEM_NM) LIKE LOWER(#{searchName})
+						</if>
+						ORDER BY A.PJT_NO) B)
+	</select>
+	
+	<select id="getList" resultType="ProjectVO">
+		SELECT * 
+		  FROM 
+			   (SELECT ROWNUM RNUM, B.* 
+				  FROM		
+				   	   ( SELECT A.PJT_NO
+				   	   		  , p.PJT_NM 
+				   	    	  , A.PRGRS
+				   	    	  , p.PJT_MNGR
+				   	    	  , p.PJT_RGDT
+				   	    	  , cm.CH_MEM_NM
+				   	    	  , p.PJT_STAT
+						   FROM 	
+							    ( SELECT p.PJT_NO, ROUND(NVL(AVG(PRGRS), 0))||'%' PRGRS
+							         FROM PROJECT p
+							         LEFT OUTER JOIN PROJECT_DETAIL pd ON pd.PJT_NO = p.PJT_NO 
+							        WHERE p.CH_NO = #{synerhub1}
+							     GROUP BY p.PJT_NO 
+							     ORDER BY p.PJT_NO) A
+						    JOIN PROJECT p ON A.PJT_NO = p.PJT_NO
+						    JOIN DOCUMENT d ON p.DOC_NO = d.DOC_NO
+						    JOIN CHANNEL c ON c.CH_NO = p.CH_NO
+						    JOIN CHANNEL_MEMBER cm ON c.CH_NO = cm.CH_NO 
+						    					  AND cm.MEM_NO = p.PJT_MNGR
+						   WHERE 1 = 1
+						<if test="stat != null and stat != ''">
+							 AND p.PJT_STAT = #{stat}
+						</if>
+						<if test="searchTitle != null and searchTitle != ''">
+						     AND LOWER(p.PJT_NM) LIKE LOWER(#{searchTitle})
+						</if>
+						<if test="searchName != null and searchName != ''">
+						     AND LOWER(cm.CH_MEM_NM) LIKE LOWER(#{searchName})
+						</if>
+						ORDER BY A.PJT_NO DESC) B)
+<![CDATA[WHERE RNUM >= #{rowCnt} * (#{page}-1) + 1 AND RNUM <= #{rowCnt} * #{page}]]>
+	</select>
+ 
+	<select id="getProjectDetailTotal" resultType="int">
+		SELECT nvl(max(rownum), 0) 
+		  FROM PROJECT_DETAIL p, "MEMBER" m
+		 WHERE p.MEM_NO = m.MEM_NO
+		<if test="searchTitle != null and searchTitle != ''">
+		   AND LOWER(PJT_DTL_NM) LIKE LOWER(#{searchTitle})
+		</if>
+		<if test="searchName != null and searchName != ''">
+		   AND LOWER(m.MEM_NAME) LIKE LOWER(#{searchName})
+		</if>
+		   AND PJT_NO = #{synerhub1}
+	</select>
+
+	<select id="getProjectList" resultType="ProjectVO">
+
+		SELECT B.*
+		FROM(
+			SELECT ROWNUM RNUM, A.* 
+			  FROM (SELECT p.PJT_NO, PJT_NM, PJT_MNGR, STRT_DT, EST_DT_END, 
+			  			   END_DT, SMRY, CONTS, p.CH_NO, p.DOC_NO, PJT_DL, p.TH_NO, PJT_STAT,  m.MEM_NAME mngr_nm, d.DOC_TTL
+					  FROM PROJECT p, PROJECT_GROUP pg, PROJECT_GROUP_MEMBER pgm, "MEMBER" m, DOCUMENT d 
+				     WHERE p.PJT_NO = pg.PJT_NO
+					   AND pg.GROUP_NO = pgm.GROUP_NO
+					   AND p.PJT_MNGR = m.MEM_NO
+					   AND p.DOC_NO = d.DOC_NO
+					   AND pgm.MEM_ID = #{synerhub1}
+					   AND p.CH_NO = #{synerhub2}
+					<if test="searchTitle != null and searchTitle != ''">
+					   AND LOWER(PJT_NM) LIKE LOWER(#{searchTitle})
+					</if>
+					<if test="searchName != null and searchName != ''">
+					   AND LOWER(m.MEM_NAME) LIKE LOWER(#{searchName})
+					</if>
+				  ORDER BY p.PJT_NO DESC) A
+				 ) B
+		 <![CDATA[WHERE B.RNUM >= #{rowCnt} * (#{page}-1) + 1 AND B.RNUM <= #{rowCnt} * #{page}]]>
+
+	</select>
+	
+	<select id="getProjectDetailList" resultType="ProjectDetailVO">
+		SELECT B.*
+		  FROM 
+		       (SELECT ROWNUM RNUM, A.*
+		  	  	FROM (SELECT  PJT_DTL_NO
+							, PJT_WRK_NM
+							, WRK_STRT_DT
+							, PRGRS
+							, PJT_NOTE
+							, pd.MEM_NO
+							, pd.MEM_NO2
+							, pd.PJT_NO
+							, d.DOC_TTL
+							, PJT_DTL_STAT
+							, (SELECT CH_MEM_NM 
+								 FROM CHANNEL_MEMBER 
+								WHERE MEM_NO = pd.MEM_NO 
+								  AND CH_NO = #{synerhub2}) MEM_NM
+							, (SELECT CH_MEM_NM 
+								 FROM CHANNEL_MEMBER 
+								WHERE MEM_NO = pd.MEM_NO2 
+								  AND CH_NO = #{synerhub2}) MEM_NM2
+			      	      FROM PROJECT_DETAIL pd
+			          	  JOIN PROJECT p ON pd.PJT_NO = p.PJT_NO
+			          	  JOIN document d ON p.DOC_NO = d.DOC_NO
+			         	 WHERE pd.PJT_NO = #{synerhub1}
+			         	<if test="searchName != null and searchName != ''">
+					       AND LOWER(m.MEM_NAME) LIKE LOWER(#{searchName})
+						</if>
+			         	<if test="searchTitle != null and searchTitle != ''">
+					       AND LOWER(PJT_WRK_NM) LIKE LOWER(#{searchTitle})
+						</if>
+			      	  ORDER BY pd.PJT_DTL_NO DESC) A ) B
+		<![CDATA[WHERE B.RNUM >= #{rowCnt} * (#{page}-1) + 1 AND B.RNUM <= #{rowCnt} * #{page}]]>
+	</select>
+
+	<select id="getProjectDetail" resultType="ProjectVO">
+
+		select * from project where ch_no = #{synerhub1}
+
+	</select>
+
+	<update id="updateProject">
+		<!-- 프로젝트 메니저, 기간 내용 수정내역 문서 등 동적쿼리 필요 -->
+	</update>
+	
+	<update id="projectGo" parameterType="long">
+		UPDATE PROJECT SET
+		PJT_STAT = 'PJST00',
+		END_DT = null
+		WHERE PJT_NO = #{synerhub1}
+	</update>
+	
+	<update id="projectStop" parameterType="long">
+		UPDATE PROJECT SET
+		PJT_STAT = 'PJST01'
+		WHERE PJT_NO = #{synerhub1}
+	</update>
+	
+	<update id="projectTerminate" parameterType="long">
+		UPDATE PROJECT SET
+		PJT_STAT = 'PJST02',
+		END_DT = SYSDATE
+		WHERE PJT_NO = #{synerhub1}
+	</update>
+	
+	<update id="projectDetailGo" parameterType="long">
+		UPDATE PROJECT_DETAIL SET
+		PJT_STAT = 'PJST00',
+		END_DT = null
+		WHERE PJT_DTL_NO = #{synerhub1}
+	</update>
+	
+	<update id="projectDetailStop" parameterType="long">
+		UPDATE PROJECT_DETAIL SET
+		PJT_STAT = 'PJST01'
+		WHERE PJT_DTL_NO = #{synerhub1}
+	</update>
+	
+	<update id="projectDetailTerminate" parameterType="long">
+		UPDATE PROJECT_DETAIL SET
+		PJT_STAT = 'PJST02',
+		END_DT = SYSDATE
+		WHERE PJT_DTL_NO = #{synerhub1}
+	</update>
+
+	<update id="deleteProject">
+
+		update project where pjt_no = #{synerhub1}
+		set (
+		pjt_dl = 1
+		)
+
+	</update>
+	
+	<select id="getMyinfo" parameterType="PagingVO" resultType="ChannelMemberVO">
+		SELECT CH_MEM_TH_NM
+			   , CH_ROLE_NM
+			   , CH_MEM_NM 
+		  FROM CHANNEL_MEMBER cm 
+		 WHERE MEM_NO = #{synerhub1} 
+		   AND CH_NO = #{synerhub2}
+	</select>
+
+	<select id="getDocListTotal" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*) FROM (   
+		SELECT ROWNUM RNUM, Z.* 
+		  FROM (SELECT d.DOC_TTL
+			      FROM APLN a 
+			      JOIN DOCUMENT d ON a.DOC_NO = d.DOC_NO 
+			      JOIN CHANNEL_MEMBER cm ON cm.MEM_NO = d.DOC_WRTR 
+			     WHERE a.APLN_NO IN (SELECT max(a.APLN_NO) APLN_NO
+							   	 	   FROM APLN a 
+							   		  WHERE a.DOC_NO IN (SELECT a.DOC_NO
+											  	    	   FROM DOCUMENT d 
+											  	    	   JOIN APLN a ON a.DOC_NO = d.DOC_NO
+												   		  WHERE a.APLN_MEM_NO = #{synerhub1}
+												     		AND d.CH_NO = #{synerhub2}
+											       		  GROUP BY a.DOC_NO)
+							   		  GROUP BY a.DOC_NO)
+				   AND a.APLN_STAT = 'APST01'
+				   AND d.DOC_STAT = 'DCST00'
+				 ORDER BY d.DOC_NO DESC) Z)
+		 WHERE 1 = 1
+		 <if test="searchTitle != null and searchTitle != ''">
+		   AND LOWER(DOC_TTL) LIKE LOWER(#{searchTitle})
+		 </if>
+	</select>
+
+	<select id="getDocList" parameterType="PagingVO" resultType="DocumentVO">
+		SELECT * FROM (   
+		SELECT ROWNUM RNUM, Z.* 
+		  FROM (SELECT d.DOC_TTL, a.DOC_NO, a.APLN_MEM_NM, cm.CH_MEM_NM, d.DOC_RGDT 
+		  			 , (SELECT CH_ROLE_NM FROM CHANNEL_MEMBER cm2 WHERE cm2.MEM_NO = a.APLN_MEM_NO AND cm2.CH_NO = 95) CH_ROLE_NM
+			      FROM APLN a 
+			      JOIN DOCUMENT d ON a.DOC_NO = d.DOC_NO 
+			      JOIN CHANNEL_MEMBER cm ON cm.MEM_NO = d.DOC_WRTR 
+			     WHERE a.APLN_NO IN (SELECT max(a.APLN_NO) APLN_NO
+							   	 	   FROM APLN a 
+							   		  WHERE a.DOC_NO IN (SELECT a.DOC_NO
+											  	    	   FROM DOCUMENT d 
+											  	    	   JOIN APLN a ON a.DOC_NO = d.DOC_NO
+												   		  WHERE a.APLN_MEM_NO = #{synerhub1}
+												     		AND d.CH_NO = #{synerhub2}
+											       		  GROUP BY a.DOC_NO)
+							   		  GROUP BY a.DOC_NO)
+				   AND a.APLN_STAT = 'APST01'
+				   AND d.DOC_STAT = 'DCST00'
+				 ORDER BY d.DOC_NO DESC) Z)
+<![CDATA[WHERE RNUM >= #{rowCnt} * (#{page}-1) + 1 AND RNUM <= #{rowCnt} * #{page}]]>
+		 <if test="searchTitle != null and searchTitle != ''">
+		   AND LOWER(DOC_TTL) LIKE LOWER(#{searchTitle})
+		 </if>
+	</select>
+	
+	<insert id="projectInsert" parameterType="ProjectVO" useGeneratedKeys="true">
+		<selectKey keyProperty="pjtNo" order="BEFORE" resultType="int">
+			SELECT seq_project_no.NEXTVAL FROM DUAL		
+		</selectKey>
+		INSERT
+	INTO PROJECT (
+		  PJT_NO
+		, PJT_NM
+		, PJT_MNGR
+		, STRT_DT
+		, CONTS
+		, CH_NO
+		, DOC_NO
+		, PJT_DL
+		<if test="thNo != 0">
+		, TH_NO
+		</if>
+		, PJT_STAT
+		, PJT_RGDT
+		, TEMP
+		, PJT_MNGR_NM
+		, ATCH_FILE_ID)
+	VALUES (
+		  #{pjtNo}
+		, #{pjtNm}
+		, #{pjtMngr}
+		, sysdate
+		, #{conts}
+		, #{chNo}
+		, #{docNo}
+		, 0
+		<if test="thNo != 0">
+		, #{thNo}
+		</if>
+		, 'PJST00'
+		, sysdate
+		, 'N'
+		, #{pjtMngrNm}
+		, #{atchFileId})
+	</insert>
+	
+	<insert id="projectGroupInsert" parameterType="ProjectGroupVO" useGeneratedKeys="true">
+		<selectKey keyProperty="groupNo" order="BEFORE" resultType="int">
+			SELECT seq_project_group_no.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO	PROJECT_GROUP(
+			  GROUP_NO
+			, GROUP_MNGR
+			, PJT_NO)
+		VALUES(
+			  #{groupNo}
+			, #{groupMngr}
+			, #{pjtNo})		
+	</insert>
+	
+	<insert id="projectGroupMemberInsert" parameterType="ProjectGroupMemberVO">
+		INSERT INTO PROJECT_GROUP_MEMBER (
+			  GROUP_MEM_NO
+			, GROUP_NO
+			, MEM_NO
+			, CH_MEM_NM
+			, CH_ROLE_NM
+			, CH_MEM_TH_NM)
+		VALUES (
+			  seq_project_group_member.NEXTVAL
+			, #{groupNo}
+			, #{memNo}
+			, #{chMemNm}
+			, #{chRoleNm}
+			, #{chMemThNm})
+	</insert>
+	
+	<select id="getProject" parameterType="PagingVO" resultMap="ProjectMap">
+		SELECT p.PJT_NO		, p.PJT_NM		, p.PJT_MNGR
+			 , p.PJT_RGDT	, p.DOC_NO		, p.CONTS
+			 , p.CH_NO		, p.TH_NO		, pgm.MEM_NO
+			 , pgm.CH_MEM_NM, pgm.CH_ROLE_NM, d.DOC_TTL,
+			 (SELECT COUNT(ATCH_DETAIL_FILE_ID)
+			 	FROM PROJECT p 
+			 	LEFT OUTER JOIN ATCH_FILE_DETAIL afd ON p.ATCH_FILE_ID = afd.ATCH_DETAIL_FILE_ID 
+			   WHERE p.PJT_NO = #{synerhub1}
+			   GROUP BY p.PJT_NO ) FILE_CNT
+		  FROM PROJECT p 
+		  JOIN PROJECT_GROUP pg ON p.PJT_NO = pg.PJT_NO
+		  JOIN PROJECT_GROUP_MEMBER pgm ON pg.GROUP_NO = pgm.GROUP_NO 
+  		  JOIN DOCUMENT d ON d.DOC_NO = p.DOC_NO 
+		 WHERE p.PJT_NO = #{synerhub1}
+		 ORDER BY pgm.MEM_NO
+	</select>
+	
+	<select id="getFileList" parameterType="PagingVO" resultType="AtchFileDetailVO">
+		SELECT ATCH_FILE_ORGNL_NM, ATCH_FILE_SAVE_NM
+		  FROM ATCH_FILE_DETAIL afd 
+		  JOIN ATCH_FILE af ON afd.ATCH_FILE_ID = af.ATCH_FILE_ID 
+		  JOIN PROJECT p ON p.ATCH_FILE_ID = af.ATCH_FILE_ID
+		 WHERE PJT_NO = #{synerhub1}
+		 ORDER BY ATCH_DETAIL_FILE_ID
+	</select>
+	
+	<insert id="inserPjtDetail" parameterType="ProjectDetailVO" useGeneratedKeys="true">
+		<selectKey keyProperty="pjtDtlNo" order="BEFORE" resultType="int">
+			SELECT seq_project_detail.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO PROJECT_DETAIL
+			( PJT_DTL_NO
+			, PJT_WRK_NM
+			, WRK_STRT_DT
+			, PRGRS
+			, PJT_NOTE
+			, MEM_NO
+			, MEM_NO2
+			, PJT_NO
+			, PJT_DTL_STAT)
+		VALUES
+			( #{pjtDtlNo}
+			, #{pjtWrkNm}
+			, sysdate
+			, 0
+			, #{pjtNote} 
+			, #{memNo}
+			, #{memNo2}
+			, #{pjtNo}
+			, 'PDST00')
+	</insert>
+	
+	<select id="getPjtDetailVO" parameterType="int" resultType="ProjectDetailVO">
+		SELECT pd.PJT_DTL_NO
+			, pd.PJT_WRK_NM
+			, pd.PRGRS
+			, pd.MEM_NO
+			, p.CH_NO 
+			, (SELECT CH_MEM_NM FROM CHANNEL_MEMBER WHERE MEM_NO = pd.MEM_NO AND CH_NO = p.CH_NO) MEM_NM
+			, (SELECT CH_MEM_NM FROM CHANNEL_MEMBER WHERE MEM_NO = pd.MEM_NO2 AND CH_NO = p.CH_NO) MEM_NM2
+		  FROM PROJECT_DETAIL pd
+		  JOIN PROJECT p ON p.PJT_NO = pd.PJT_NO
+		 WHERE PJT_DTL_NO = #{no}
+	</select>
+	
+	<select id="getPjtDtlSubWrkList" resultMap="pdMap">
+		SELECT pd.PJT_DTL_NO
+			 , pd.PJT_WRK_NM 
+			 , pd.PJT_NOTE
+			 , pd.MEM_NO
+			 , pd.MEM_NO2
+			 , PDS_NO
+			 , PDS_CONTS
+			 , PDS_RGDT
+		  FROM PROJECT_DETAIL pd
+		  LEFT OUTER JOIN PROJECT_DETAIL_SUBWORK pds ON pd.PJT_DTL_NO = pds.PJT_DTL_NO 
+		 WHERE pd.PJT_DTL_NO = #{no}
+		 ORDER BY PDS_NO ASC
+	</select>
+	
+	<update id="uploadPds" parameterType="ProjectDetailSubWrkVO" useGeneratedKeys="true">
+		 MERGE
+		  INTO PROJECT_DETAIL_SUBWORK
+		 USING DUAL ON (PDS_NO = #{pdsNo})
+		  WHEN MATCHED
+		  THEN 
+		UPDATE SET
+			   PDS_CONTS = #{pdsConts}
+			 , PJT_DTL_NO = #{pjtDtlNo}
+			 , PDS_RGDT = #{pdsRgdt}
+		  WHEN NOT MATCHED
+		  THEN
+		INSERT (
+			   PDS_NO
+			 , PDS_CONTS
+			 , PJT_DTL_NO
+			 , PDS_RGDT)
+		VALUES (
+			   seq_pds_no.NEXTVAL
+			 , #{pdsConts}
+			 , #{pjtDtlNo}
+			 , sysdate)
+	</update>
+	
+	<select id="getMaxPdsNo" resultType="int">
+		SELECT max(PDS_NO) FROM PROJECT_DETAIL_SUBWORK
+	</select>
+
+	 <select id="getPds" resultType="ProjectDetailSubWrkVO">
+	 	SELECT PDS_NO
+	 		 , PDS_CONTS
+	 		 , PJT_DTL_NO
+	 		 , PDS_RGDT 
+	 	  FROM PROJECT_DETAIL_SUBWORK 
+	 	 WHERE PDS_NO = #{no}
+	 </select>
+	 
+	 <update id="updatePrgrs" parameterType="ProjectDetailVO">
+	 	UPDATE PROJECT_DETAIL SET
+	 		   PRGRS = #{prgrs}
+	 	 WHERE PJT_DTL_NO = #{pjtDtlNo}
+	 </update>
+	 
+	 <select id="selectPjt" parameterType="ProjectDetailVO" resultType="int">
+	 	SELECT PJT_DTL_NO 
+	 	  FROM PROJECT_DETAIL 
+	 	 WHERE PJT_DTL_NO = #{pjtDtlNo}
+	 </select>
+	 
+	 <select id="getPjtMemList" parameterType="int" resultType="ProjectDetailVO">
+	 	SELECT pgm.CH_MEM_NM 
+		  FROM PROJECT p
+		  JOIN PROJECT_GROUP pg ON p.PJT_NO = pg.PJT_NO 
+		  LEFT OUTER JOIN PROJECT_GROUP_MEMBER pgm ON pg.GROUP_NO = pgm.GROUP_NO
+		 WHERE p.PJT_NO = #{no}
+	 </select>
+	 
+	 <select id="getDataList" parameterType="int" resultType="ProjectDetailVO">
+	 	SELECT AVG(PRGRS)||'%' PRGRS 
+	 	     , pd.MEM_NO
+	 	     , (SELECT cm.CH_MEM_NM 
+				  FROM PROJECT p 
+				  JOIN CHANNEL c ON p.CH_NO = c.CH_NO
+				  JOIN CHANNEL_MEMBER cm ON c.CH_NO = cm.CH_NO
+				 WHERE p.PJT_NO = #{no}
+				   AND cm.MEM_NO = pd.MEM_NO) MEM_NM
+		  FROM PROJECT_DETAIL pd 
+		  JOIN PROJECT p ON p.PJT_NO = pd.PJT_NO
+		 WHERE p.PJT_NO = #{no}
+		 GROUP BY pd.MEM_NO
+	 </select>
+	 
+</mapper>

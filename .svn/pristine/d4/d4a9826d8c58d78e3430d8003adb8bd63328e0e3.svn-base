@@ -1,0 +1,445 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="kr.or.ddit.components.channel.service.IChannelMapper">
+
+	<resultMap type="ChannelVO" id="ChannelMap">
+		<id property="chNo" column="ch_no" />
+		<result property="chTtl" column="ch_ttl" />
+		<result property="chCd" column="ch_cd" />
+		<result property="chCmnt" column="ch_cmnt" />
+		<result property="chRgdt" column="ch_rgdt" />
+		<result property="chPlanExpry" column="ch_plan_expry" />
+		<result property="chRole" column="ch_role" />
+		<result property="chLmg" column="ch_lmg" />
+		<result property="planNo" column="plan_no" />
+		<result property="channelTotal" column="channel_total" />
+		<result property="planCcl" column="plan_ccl" />
+		<collection property="thList" resultMap="ChThMap"/>
+	</resultMap>
+	
+	<resultMap type="ChannelVO" id="ChannelMemberMap">
+		<id property="chNo" column="ch_no" />
+		<result property="chTtl" column="ch_ttl" />
+		<result property="chCd" column="ch_cd" />
+		<result property="chCmnt" column="ch_cmnt" />
+		<result property="chRgdt" column="ch_rgdt" />
+		<result property="chPlanExpry" column="ch_plan_expry" />
+		<result property="chRole" column="ch_role" />
+		<result property="chLmg" column="ch_lmg" />
+		<collection property="chMemList" resultMap="chMemberMap"/>	
+	</resultMap>
+
+	<resultMap type="ChannelMemberVO" id="chMemberMap">
+		<id property="chMemNo" column="ch_mem_no" />
+		<result property="chRole" column="ch_role" />
+		<result property="chRoleNm" column="ch_role_nm" />
+		<result property="chPrp" column="ch_prp" />
+		<result property="memNo" column="mem_no" />
+		<result property="chNo" column="ch_no" />
+		<result property="chMemNm" column="ch_mem_nm" />
+		<result property="chPrfImg" column="ch_prf_img" />
+	</resultMap>
+
+	
+
+	<resultMap type="ChannelThreadVO" id="ChThMap">
+		<id property="thNo" column="TH_NO"/>
+		<result property="thTtl" column="TH_TTL"/>
+		<result property="threadLeader" column="TH_MNGR_NM"/>
+		<result property="thMemCount" column="MEM_CNT"/>
+		<result property="thPw" column="th_pw"/>
+		<result property="thRgdt" column="th_rgdt"/>
+		<result property="thClr" column="th_clr"/>
+		<result property="chNo" column="ch_no"/>
+	</resultMap>
+
+
+	<insert id="chCreateMemberInsert" parameterType="ChannelVO" useGeneratedKeys="true">
+		<selectKey keyProperty="chMemNo" resultType="int" order="BEFORE">
+			select seq_channel_member.nextval from dual
+		</selectKey>
+		insert into channel_member (
+			ch_mem_no, ch_role, ch_role_nm, ch_prp, mem_no,
+			ch_no, ch_mem_nm
+		) values (
+			#{chMemNo}, 0, '채널장', 'C', #{memNo},
+			#{chNo}, #{chMemNm}
+		)
+	</insert>
+
+	<insert id="chInsert" parameterType="ChannelVO"	useGeneratedKeys="true">
+		<selectKey keyProperty="chNo" resultType="int" order="BEFORE">
+			select seq_channel.nextval from dual
+		</selectKey>
+		insert into channel (
+		ch_no, ch_ttl, ch_cd, ch_cmnt, ch_rgdt,
+		ch_plan_expry, ch_role, ch_lmg
+		) values (
+		#{chNo}, #{chTtl}, #{chCd}, #{chCmnt}, sysdate,
+		#{chPlanExpry}, #{chRole}, #{chLmg}
+		)
+	</insert>
+	
+	<insert id="addThToCh" parameterType="ChannelThreadVO">
+		INSERT INTO channel_thread (th_no, th_ttl, th_pw, th_rgdt, th_clr, ch_no)
+        VALUES (seq_channel_thread.NEXTVAL, #{thTtl}, #{thPw}, SYSDATE, #{thClr}, #{chNo})
+	</insert>
+	
+	<insert id="inviteMemToCh" parameterType="ChInviteVO">
+		<selectKey keyProperty="chMemNo" resultType="int" order="BEFORE">
+			select seq_channel_member.nextval from dual
+		</selectKey>
+		INSERT INTO CHANNEL_MEMBER (
+			CH_MEM_NO
+			, CH_NO
+			, MEM_NO
+			, CH_ROLE
+			, CH_ROLE_NM
+			, CH_PRP
+		)	VALUES (
+			#{chMemNo}
+			, #{chNo}
+			, #{memNo}
+			, 1
+			, '회원'
+			, 'I'
+		)
+	</insert>
+	
+	<select id="chMemberList" parameterType="ChannelVO" resultType="ChannelMemberVO">
+		
+		SELECT
+			chm.CH_MEM_NO,
+			chm.CH_ROLE,
+			chm.CH_ROLE_NM,
+			chm.CH_PRP,
+			chm.MEM_NO,
+			chm.CH_NO,
+			chm.CH_MEM_NM,
+			chm.CH_PRF_IMG,
+			chm.CH_MEM_TH_NM,
+			chm.CH_MEM_TH_NO,
+			m.MEM_NO,
+			m.MEM_ID,
+			m.MEM_NAME,
+			m.MEM_PRFLiMG,
+			m.MEM_EMAIL
+		FROM
+			CHANNEL_MEMBER chm
+		JOIN
+			MEMBER m ON chm.MEM_NO = m.MEM_NO
+		WHERE chm.CH_NO = #{chNo}
+	</select>
+	
+	<select id="checkInvite" parameterType="int" resultType="ChannelVO">
+		select 
+			ch.ch_ttl
+			, ch.ch_cmnt
+			, ch.ch_no
+		from 
+			channel_member chm
+			, channel ch
+		where 
+			chm.mem_no = #{memNo}
+			and chm.ch_prp='I'
+			and chm.ch_no = ch.ch_no
+	</select>
+	
+	<update id="acceptInvite" parameterType="ChannelVO">
+		UPDATE CHANNEL_MEMBER
+		SET
+			CH_PRP = 'A'
+		WHERE
+			CH_NO = #{chNo}
+			AND MEM_NO = #{memNo}
+	</update>
+	
+	
+	<select id="getChList" resultMap="ChannelMap">
+		SELECT CH.CH_NO, CH_TTL, CH_CD, CH_CMNT, CH_RGDT, CH_PLAN_EXPRY, CH.CH_ROLE, CH_LMG , chp.plan_no, chp.plan_ccl
+		 ,TH_NO, TH_TTL, TH_PW, TH_RGDT, TH_CLR	, (select count(*) from CHANNEL_MEMBER where ch_no = CH.CH_NO) channel_total
+		FROM CHANNEL CH 
+		JOIN CHANNEL_MEMBER cm ON cm.CH_NO = CH.CH_NO 
+		LEFT OUTER JOIN CHANNEL_THREAD CT ON (CH.CH_NO = CT.CH_NO)
+		LEFT OUTER JOIN channel_plan chp ON  chp.ch_no = ch.ch_no
+		WHERE  cm.MEM_NO = 1
+		and not cm.ch_prp='I'
+		and (chp.paid_no = (select max(paid_no) from channel_plan where ch_no = CH.CH_NO) OR chp.paid_no IS NULL)
+	</select>
+	
+	
+	<update id="chUpdate" parameterType="ChannelVO">
+		update
+		set
+		ch_no = #{chNo}
+		, ch_ttl = #{chTtl}
+		, ch_cmnt = #{chCmnt}
+		, ch_cd = #{chCd}
+	</update>
+
+	<delete id="chDelete" parameterType="int">
+		delete from channel
+		where
+		ch_no = #{chNo} 
+	</delete>
+	
+	<select id="chCodeExists" parameterType="String" resultType="boolean">
+		SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
+        FROM channel
+        WHERE ch_cd = #{chCd}
+	</select>
+	
+	
+	
+	<select id="getChNo" resultType="int">  
+		SELECT LAST_NUMBER FROM USER_SEQUENCES WHERE SEQUENCE_NAME = 'SEQ_CHANNEL'
+	</select>
+
+	<select id="getChMemberList" resultType="ChannelMemberVO">
+		SELECT CH_MEM_NO
+			, CH_ROLE
+			, CH_ROLE_NM
+			, cm.MEM_NO
+			, CH_MEM_NM
+			, CH_PRF_IMG
+			, MEM_NAME
+			, MEM_STATUS
+			, CH_MEM_TH_NM
+			, CH_MEM_TH_NO
+		  FROM CHANNEL_MEMBER cm
+		  JOIN "MEMBER" m ON cm.MEM_NO = m.MEM_NO
+		 WHERE CH_NO = #{no}
+	  ORDER BY cm.MEM_NO
+	</select>
+	
+	<select id="getThList" resultType="ChannelThreadVO">
+		SELECT TH_NO, TH_TTL, TH_RGDT, TH_CLR, CH_NO FROM CHANNEL_THREAD WHERE CH_NO = #{no}
+	</select>
+		
+	<select id="getMemRoleList" resultType="string">
+		SELECT MEM_ROLE_LIST FROM CHANNEL c WHERE CH_NO = #{no}
+	</select>	
+	
+	<select id="getMemMngrRoleList" resultType="string">
+		SELECT MEM_MNGR_ROLE_LIST FROM CHANNEL c WHERE CH_NO = #{no}
+	</select>	
+	
+	<select id="getChCreator" resultType="int">
+		SELECT NVL(cm.MEM_NO, 0)
+		  FROM (
+			   SELECT min(CH_MEM_NO) CH_MEM_NO
+				 FROM CHANNEL_MEMBER cm
+			    WHERE cm.CH_NO = #{no}) A 
+		  JOIN CHANNEL_MEMBER cm ON A.CH_MEM_NO = cm.CH_MEM_NO
+	</select>
+	
+	<select id="getChRole" resultType="String">
+		SELECT CH_ROLE FROM CHANNEL WHERE ch_no = #{no}
+	</select>
+	
+	<select id="chMemTotal" parameterType="ChannelMemberVO" resultType="int">
+		SELECT COUNT(DISTINCT cm.MEM_NO) total_members
+		FROM CHANNEL_MEMBER cm
+		JOIN CHANNEL c ON cm.CH_NO = c.CH_NO
+		WHERE c.CH_NO = #{chNo}
+	</select>
+	
+	<update id="updateChRole">
+		UPDATE CHANNEL
+		   SET CH_ROLE = #{chRole}
+		 WHERE CH_NO = #{chNo}
+	</update>
+	
+	<update id="updateChMemRole">
+		UPDATE CHANNEL_MEMBER 
+		   SET CH_ROLE_NM = #{chRoleNm}
+		   	   , CH_ROLE = #{chRole}
+		   	   , CH_MEM_TH_NO = #{chMemThNo}
+		   	   , CH_MEM_TH_NM = #{chMemThNm}
+		 WHERE CH_NO = #{chNo}
+		   AND MEM_NO = #{memNo}
+	</update>
+	
+	<update id="updateChRoleList">
+		UPDATE CHANNEL
+		   SET MEM_ROLE_LIST = #{memRoleList}
+		 WHERE CH_NO = #{chNo}
+	</update>
+	
+	<update id="updateChMngrRoleList">
+		UPDATE CHANNEL
+		   SET MEM_MNGR_ROLE_LIST = #{memMngrRoleList}
+		 WHERE CH_NO = #{chNo}
+	</update>
+	
+	<select id="chSelect" parameterType="ChannelMemberVO" resultMap="ChannelMemberMap">
+	    SELECT 
+	        m.ch_mem_no, m.mem_no, m.ch_no,
+	        c.ch_no, c.ch_ttl, c.ch_cmnt, c.ch_lmg
+	    FROM 
+	        channel_member m
+	    JOIN 
+	        channel c ON m.ch_no = c.ch_no
+	    WHERE 
+	        c.ch_no = #{chNo}
+	</select>
+	
+	
+	<select id="getChAndTh" parameterType="ChannelVO" resultMap="ChannelMap">
+	    SELECT
+		    ch.ch_no
+		  , ch.ch_ttl
+		  , th.th_no
+		  , th.th_ttl
+		FROM
+		    channel_thread th, channel ch 
+		where th.ch_no = ch.ch_no
+		and ch.ch_no = #{chNo}
+		ORDER BY th.th_no asc
+	</select>
+	
+	<select id="getThByChNo" parameterType="int" resultMap="ChThMap">
+		SELECT TH_MNGR_NM, TH_TTL, CT2.TH_NO, MEM_CNT FROM CHANNEL_THREAD CT2
+		JOIN (
+		SELECT TH_NO, COUNT(*) MEM_CNT
+		   FROM CHANNEL_THREAD CT
+		   JOIN CHANNEL_MEMBER CM ON ct.th_no = cm.ch_mem_th_no
+		  WHERE CT.CH_NO = #{chNo}
+		GROUP BY TH_NO) A ON CT2.TH_NO = A.TH_NO
+		ORDER BY TH_NO
+	</select>
+	
+	<select id="pagingChList" parameterType="PaginationInfoVO" resultType="ChannelVO">
+		SELECT
+			b.*
+		from(
+			select
+				a.*, row_number() over(order by a.ch_no ASC) rnum
+			from(
+				select
+					c.ch_no
+					, c.ch_ttl
+					, c.ch_cd
+					, (SELECT COUNT(*) FROM channel_member WHERE ch_no = c.ch_no) AS channel_count
+					, cp.plan_no
+				FROM
+					channel c
+				JOIN CHANNEL_PLAN cp ON cp.CH_NO = c.CH_NO
+				ORDER BY
+					ch_no ASC
+			)a
+		)b
+		<![CDATA[
+			where b.rnum >= #{startRow} and b.rnum <= #{endRow} 
+		]]>
+	</select>
+	
+	<update id="chConnect" parameterType="ChannelMemberVO">
+		UPDATE channel_member
+		SET
+		    CH_CNNTDT = sysdate
+		WHERE
+		    MEM_NO = #{memNo}
+		    AND ch_no = #{chNo}
+	</update>
+	
+	<select id="getCntForDashBoard" resultType="ChannelVO" parameterType="ChannelMemberVO">
+		SELECT (		SELECT COUNT(*)
+		  FROM (SELECT ROWNUM RNUM, Y.* 
+			  	  FROM (SELECT Z.*, a.APLN_NO, a.APLN_MEM_NM
+						  FROM (SELECT C.*, cm.CH_MEM_NM DOC_WRTR_NM 
+					  			  FROM (SELECT B.DOC_NO, d.DOC_TTL, d.DOC_RGDT, B.FILE_CNT, ct.TH_TTL, d.DOC_WRTR, d.TH_NO, d.DOC_STAT
+										  FROM (SELECT A.DOC_NO, COUNT(afd.ATCH_DETAIL_FILE_ID) FILE_CNT
+										    	  FROM (SELECT DOC_NO, DOC_FILE_ID, TH_NO	
+										   	         	  FROM DOCUMENT
+											     	  	 WHERE DOC_WRTR = #{memNo}
+												     	   AND CH_NO = #{chNo}
+											     	   <if test="thNo != 0">
+												     	   and TH_NO = #{thNO}
+											     	   </if>
+												     	   AND DOC_STAT = 'DCST00'
+												       	   	   ) A
+										       	  LEFT OUTER JOIN ATCH_FILE_DETAIL afd ON A.DOC_FILE_ID = afd.ATCH_FILE_ID
+										   	  GROUP BY A.DOC_NO) B
+									   	  JOIN DOCUMENT d ON d.DOC_NO = B.DOC_NO
+									   	  LEFT OUTER JOIN CHANNEL_THREAD ct ON ct.TH_NO = d.TH_NO
+									   		) C
+						   		  JOIN CHANNEL_MEMBER cm ON cm.MEM_NO = C.DOC_WRTR
+						   		) Z
+					  	  LEFT OUTER JOIN APLN a ON a.DOC_NO = Z.DOC_NO
+				 	  ORDER BY Z.DOC_NO DESC) Y
+				WHERE Y.APLN_NO IN (SELECT min(APLN_NO) 
+								     FROM DOCUMENT d 
+								     JOIN APLN a2 ON d.DOC_NO = a2.DOC_NO
+								      AND a2.APLN_STAT = 'APST00'
+								     GROUP BY d.DOC_NO))) DOC_ON_GOING_CNT, (		SELECT COUNT(*) 
+			   FROM DOCUMENT d 
+			   JOIN (SELECT DOC_NO, Z.APLN_NO
+					   FROM APLN a 
+					   JOIN (SELECT min(APLN_NO) APLN_NO 
+							   FROM APLN a 
+							   JOIN DOCUMENT d ON a.DOC_NO = d.DOC_NO 
+							  WHERE d.CH_NO = #{chNo} 
+						   <if test="thNo != 0">
+							  and TH_NO = #{thNO}
+						   </if>
+							    AND a.APLN_STAT = 'APST00' 
+							  GROUP BY d.DOC_NO) Z ON a.APLN_NO = Z.APLN_NO
+					  WHERE a.APLN_MEM_NO = #{memNo}) Y ON d.DOC_NO = Y.DOC_NO
+			   JOIN CHANNEL_MEMBER cm ON d.DOC_WRTR = cm.MEM_NO
+			   JOIN APLN a2 ON Y.APLN_NO = a2.APLN_NO
+		 WHERE 1 = 1) DOC_TO_APPROVAL_CNT, (			SELECT COUNT(*) 
+		  FROM 
+			   (SELECT ROWNUM RNUM, B.* 
+				  FROM		
+				   	   ( SELECT p.PJT_NM 
+						   FROM 	
+							    ( SELECT p.PJT_NO, ROUND(NVL(AVG(PRGRS), 0))||'%' PRGRS
+							         FROM PROJECT p
+							         LEFT OUTER JOIN PROJECT_DETAIL pd ON pd.PJT_NO = p.PJT_NO 
+							        WHERE p.CH_NO = #{chNo}
+						         <if test="thNo != 0">
+						     	    and TH_NO = #{thNO}
+					        	 </if>
+							     GROUP BY p.PJT_NO 
+							     ORDER BY p.PJT_NO) A
+						    JOIN PROJECT p ON A.PJT_NO = p.PJT_NO
+						    JOIN DOCUMENT d ON p.DOC_NO = d.DOC_NO
+						    JOIN CHANNEL c ON c.CH_NO = p.CH_NO
+						    JOIN CHANNEL_MEMBER cm ON c.CH_NO = cm.CH_NO 
+						    					  AND cm.MEM_NO = p.PJT_MNGR
+						   WHERE 1 = 1
+							 AND p.PJT_STAT = 'PJST00'
+						ORDER BY A.PJT_NO) B)) PJT_ON_GOING_CNT FROM dual
+	</select>
+	
+	<!-- 관리자 -->
+	<select id="channelList" parameterType="PaginationInfoVO" resultType="ChannelVO">
+		SELECT
+		    CM.CH_NO
+		    , COUNT(*)
+		    , C.CH_TTL
+		    , P.PLAN_MAX_MEM
+		    , P.PLAN_NM
+		FROM CHANNEL_MEMBER CM, CHANNEL C, PLAN P, CHANNEL_PLAN CP
+		WHERE
+		    C.CH_NO = CM.CH_NO
+		    AND CP.CH_NO = CM.CH_NO
+		    AND CP.PLAN_NO = P.PLAN_NO
+		    AND CP.PLAN_CCL = 1
+		    AND CP.CCL_RSN IS NULL
+		    <if test="searchWord != null and searchWord != ''">
+		        AND (
+		            C.CH_TTL LIKE CONCAT('%', #{searchWord}, '%')
+		            OR P.PLAN_NM LIKE CONCAT('%', #{searchWord}, '%')
+		        )
+		    </if>
+		GROUP BY CM.CH_NO, CH_TTL, PLAN_MAX_MEM, PLAN_NM
+		ORDER BY CM.CH_NO DESC
+		
+	</select>
+	
+</mapper>

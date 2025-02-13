@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.facechat.service.IFaceChatMapper">
+
+	<insert id="create">
+		INSERT INTO FACE_CHAT
+		(ROOM_NO	, ROOM_ID		, ROOM_URLID, 
+		 PASSWD		, START_TIME	, END_TIME	, 
+		 MEM_NO		, CH_NO			, TH_NO)
+		VALUES
+		(#{synerhubFc1}, #{roomId}		, #{roomUrlid}, 
+		 #{passwd}	   , sysdate		, #{endTime}  , 
+		 #{synerhubFc2}, #{synerhubFc3}	, #{synerhubFc4});
+	</insert>
+
+	<select id="faceChatList" resultType="FaceChatVO">
+		SELECT 
+			   ROOM_NO	, ROOM_ID	, ROOM_URLID, 
+			   PASSWD	, START_TIME, END_TIME, 
+			   MEM_NO	, CH_NO		, TH_NO
+  		  FROM FACE_CHAT
+ 		 WHERE CH_NO = #{synerhubFc1}
+ 		   AND ROOM_OPEN = 'Y'
+	</select>
+
+	<select id="isTitleExist" parameterType="string" resultType="string">
+		SELECT ROOM_OPEN FROM VIDEOCHAT
+		 WHERE ROOM_OPEN = 'Y' AND ROOM_TITLE = #{roomTitle}	
+	</select>
+	
+	<update id="closeRoom" parameterType="string">
+		UPDATE VIDEOCHAT SET ROOM_OPEN = 'N'
+		 WHERE ROOM_URL_ID = #{roomUrlId}
+	</update>
+	
+</mapper>

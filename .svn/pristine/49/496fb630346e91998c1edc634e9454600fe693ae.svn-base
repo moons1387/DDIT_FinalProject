@@ -1,0 +1,49 @@
+package kr.or.ddit.components.drive.service.impl;
+
+import java.util.List;
+
+import javax.inject.Inject;
+
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Service;
+
+import kr.or.ddit.components.channel.vo.ChannelMemberVO;
+import kr.or.ddit.components.drive.service.IDriveMapper;
+import kr.or.ddit.components.drive.service.IDriveService;
+import kr.or.ddit.components.drive.vo.DriveVO;
+import kr.or.ddit.components.file.vo.AtchFileDetailVO;
+
+
+@Service
+@Primary
+public class DriveServiceImpl implements IDriveService{
+	
+	@Inject
+	private IDriveMapper mapper;
+
+	@Override
+	public List<ChannelMemberVO> getChList(ChannelMemberVO channelMemberVO) {
+		return mapper.getChList(channelMemberVO);
+	}
+
+	@Override
+	public List<ChannelMemberVO> getThList(ChannelMemberVO channelMemberVO) {
+		return mapper.getThList(channelMemberVO);
+	}
+
+	@Override
+	public List<AtchFileDetailVO> getFileList(ChannelMemberVO channelMemberVO) {
+		return mapper.getFileList(channelMemberVO);
+	}
+
+	@Override
+	public int deletFile(DriveVO driveVO) {
+		return mapper.deletFile(driveVO);
+	}
+
+	@Override
+	public int updateFile(DriveVO driveVO) {
+		return mapper.updateFile(driveVO);
+	}
+
+}

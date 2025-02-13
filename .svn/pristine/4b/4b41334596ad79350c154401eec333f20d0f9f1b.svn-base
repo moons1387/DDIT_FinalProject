@@ -1,0 +1,42 @@
+package kr.or.ddit.components.facechat.vo;
+
+import lombok.Data;
+
+@Data
+public class FaceChatVO {
+
+	// roomNo
+	private int synerhubFc1;
+	// chNo
+	private int synerhubFc2;
+	// thNo
+	private int synerhubFc3;
+	// memNo
+	private int synerhubFc4;
+	private String roomTitle;
+	private String roomPasswd;
+	private String roomUrlId;
+	private String roomOpen;
+	private int maxJoinCount;
+	private String endDate;
+	private String roomId;
+	private String maxJoinCnt;
+
+	public FaceChatVO() {
+		
+	}
+
+	/**
+	 * 방을 만들 때 사용한다.
+	 * @param roomTitle		방 생성시 입력 받음
+	 * @param passwd		방 생성시 입력 받음
+	 * @param roomUrlId		방 생성 후 응답으로 받음
+	 */
+	public FaceChatVO(String roomTitle, String passwd, String roomUrlId) {
+		this.roomTitle = roomTitle;
+		this.roomPasswd = passwd;
+		this.roomUrlId = roomUrlId;
+		this.roomOpen = "Y";
+	}
+
+}

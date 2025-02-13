@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.todolist.service.ITodoListMapper">
+
+    <resultMap type="kr.or.ddit.components.todolist.vo.TodoListVO" id="tdlMap">
+        <id property="tdlNo" column="tdl_no"/>
+        <result property="tdlListnm" column="tdl_listnm"/>
+        <result property="tdlTtl" column="tdl_ttl"/>
+        <result property="tdlConts" column="tdl_conts"/>
+        <result property="tdlDt" column="tdl_dt"/>
+        <result property="tdlOrder" column="tdl_order"/>
+        <result property="tdlState" column="tdl_state"/>
+        <result property="memNo" column="mem_no"/>
+    </resultMap>
+    
+    <select id="tdlList" resultMap="tdlMap">
+        SELECT
+            tdl_no,
+            tdl_listnm,
+            tdl_ttl,
+            tdl_conts,
+            tdl_dt,
+            tdl_order,
+            tdl_state,
+            mem_no
+        FROM
+            todo_list
+        WHERE  
+            mem_no = #{memNo}
+        ORDER BY
+        	tdl_no asc, tdl_order desc
+    </select>
+    
+    <insert id="insertTdlTask" parameterType="TodoListVO" useGeneratedKeys="true">
+		<selectKey keyProperty="tdlNo" resultType="int" order="BEFORE">
+			select seq_todo_list.nextval from dual
+		</selectKey>
+		INSERT INTO todo_list (
+		    tdl_no
+		   ,tdl_listnm
+		   ,tdl_ttl
+		   ,tdl_conts
+		   ,tdl_dt
+		   ,tdl_order
+		   ,tdl_state
+		   ,mem_no
+		) VALUES (
+		    #{tdlNo}
+		   ,#{tdlListnm}
+		   ,#{tdlTtl}
+		   ,#{tdlConts}
+		   ,sysdate
+		   ,1
+		   ,1
+		   ,#{memNo}
+		)
+	</insert>
+	
+	
+	<select id="selectTdl" parameterType="TodoListVO" resultMap="tdlMap">
+		SELECT
+            tdl_no,
+            tdl_listnm,
+            tdl_ttl,
+            tdl_conts,
+            tdl_dt,
+            tdl_order,
+            tdl_state,
+            mem_no
+        FROM
+            todo_list
+        WHERE  
+            tdl_no = #{tdlNo}
+	</select>
+	
+	
+	<delete id="deleteTdlTask" parameterType="int">
+		DELETE FROM todo_list
+		WHERE 
+			tdl_no = #{tdlNo}
+	</delete>
+	
+	
+	<update id="updateTdlTask" parameterType="TodoListVO">
+		UPDATE todo_list
+   		SET
+        	tdl_ttl = #{tdlTtl},
+        	tdl_conts = #{tdlConts},
+        	tdl_dt = sysdate
+		WHERE
+    		tdl_no = #{tdlNo}
+	</update>
+	
+	
+	<update id="updateTdlState" parameterType="TodoListVO">
+		UPDATE todo_list
+   		SET
+        	tdl_dt = sysdate,
+        	tdl_state = #{tdlState},
+        	tdl_listnm = #{tdlListnm}
+		WHERE
+    		tdl_no = #{tdlNo}
+	</update>
+
+
+	<delete id="deleteTaskAll" parameterType="java.util.List">
+	    DELETE FROM todo_list
+	    WHERE 
+	    	tdl_no IN
+	    <foreach item="tdlNo" collection="list" open="(" separator="," close=")">
+	        #{tdlNo}
+	    </foreach>
+	</delete>
+
+	
+</mapper>

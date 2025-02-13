@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.channelboard.service.IChannelBoardMapper">
+	
+	<resultMap type="ChannelBoardVO" id="chBoardMap">
+		<id property="brdNo" column="BRD_NO"/>
+		<result property="brdNo" column="BRD_NO"/>
+		<result property="thNo" column="TH_NO" />
+		<result property="chNo" column="CH_NO" />
+		<result property="brdTtl" column="BRD_TTL" />
+		<result property="brdWrtr" column="BRD_WRTR" />
+		<result property="brdConts" column="BRD_CONTS" />
+		<result property="brdRgdt" column="BRD_RGDT" />
+		<result property="brdHit" column="BRD_HIT" />
+		<result property="tmp" column="TMP" />
+		<result property="brdAtchFileId" column="BRD_ATCH_FILE_ID" />
+		<result property="memPrflimg" column="MEM_PRFLIMG" />
+		<result property="thTtl" column="TH_TTL" />
+		<result property="thRgdt" column="TH_RGDT" />
+		<result property="thClr" column="TH_CLR" />
+		<result property="brdWrtrNm" column="BRD_WRTR_NM" />
+		<collection property="chBoardFileDetail" resultMap="chBoardFileDetailMap"/>
+	</resultMap>
+	
+	<resultMap type="AtchFileDetailVO" id="chBoardFileDetailMap">
+		<id property="atchDetailFileId" column="atch_detail_file_id"/>
+	    <result property="atchDetailFileId" column="atch_detail_file_id"/>
+	    <result property="atchFilePath" column="atch_file_path"/>
+	    <result property="atchFileExtn" column="atch_file_extn"/>
+	    <result property="atchFileOrgnlNm" column="atch_file_orgnl_nm"/>
+	</resultMap>
+	
+	<select id="chBoardList" parameterType="PagingVO" resultMap="chBoardMap">
+		SELECT * 
+		FROM
+			(SELECT TO_NUMBER(rownum) rnum, A.*
+			FROM
+				(SELECT 	
+					b.BRD_NO, b.BRD_WRTR, b.BRD_CONTS, b.BRD_ATCH_FILE_ID, b.BRD_RGDT, b.BRD_HIT,
+					b.CH_NO, b.TH_NO, b.BRD_TTL, b.GUBUN,
+					t.TH_TTL, t.TH_CLR, m.MEM_NAME BRD_WRTR_NM
+				FROM BOARD B
+				    LEFT OUTER JOIN CHANNEL_THREAD T ON B.TH_NO = T.TH_NO
+				    LEFT OUTER JOIN MEMBER M ON B.BRD_WRTR = M.MEM_NO
+				WHERE
+				    B.CH_NO= #{chNo}
+				    AND B.TH_NO = 0
+				    AND B.GUBUN='B'
+				<if test="brdSearchWord != null and brdSearchWord !=''">
+					AND B.BRD_TTL LIKE '%' || #{brdSearchWord} || '%'
+				</if>
+				ORDER BY
+					b.BRD_RGDT DESC) A 
+				) B
+		WHERE 1=1
+		<![CDATA[ AND B.RNUM >= #{rowCnt} * (#{page}-1) + 1 AND B.RNUM <= #{rowCnt} * #{page}]]>
+	</select>
+	
+	<select id="chBoardTotal" parameterType="PagingVO" resultType="int">
+		SELECT 	
+				count(b.BRD_NO)
+			FROM BOARD B
+			    LEFT OUTER JOIN CHANNEL_THREAD T ON B.TH_NO = T.TH_NO
+			    LEFT OUTER JOIN MEMBER M ON B.BRD_WRTR = M.MEM_NO
+			WHERE
+			    B.TH_NO=0
+			    AND B.GUBUN='B'
+			    AND B.CH_NO= #{chNo}
+			ORDER BY
+		b.BRD_RGDT DESC
+	</select>
+	
+	<select id="getChTtl" parameterType="int" resultType="string">
+		select ch_ttl 
+		from channel
+		where ch_no = #{chNo}
+	</select>
+	
+	<select id="chBoardList2" parameterType="ChannelBoardVO" resultType="ChannelBoardVO">
+		
+		SELECT
+			b.BRD_NO, b.BRD_WRTR, b.BRD_CONTS, b.BRD_ATCH_FILE_ID, b.BRD_RGDT, b.BRD_HIT,
+			b.TMP, b.CH_NO, b.TH_NO, b.BRD_TTL, b.GUBUN,
+			t.TH_TTL, t.TH_PW, m.MEM_NAME brdWrtrNm
+		FROM 
+			BOARD b
+		LEFT OUTER JOIN 
+			CHANNEL_THREAD t ON b.TH_NO = t.TH_NO
+		JOIN 
+			MEMBER m ON b.BRD_WRTR = m.MEM_NO
+		WHERE b.TH_NO = 0
+			AND b.CH_NO = #{chNo}
+			AND b.GUBUN = 'B'
+		ORDER BY 
+			b.BRD_RGDT DESC
+				
+	</select>
+	
+	<select id="chNtcList" parameterType="ChannelBoardVO" resultMap="chBoardMap">
+		SELECT B.*
+        , (SELECT CH_MEM_NM FROM CHANNEL_MEMBER WHERE CH_NO = #{chNo}  AND MEM_NO = b.BRD_WRTR) BRD_WRTR_NM
+        , (SELECT TH_TTL FROM CHANNEL_THREAD WHERE CH_NO = #{chNo}  AND TH_NO = B.TH_NO) TH_TTL
+	  	FROM BOARD b 
+	 	WHERE b.CH_NO = #{chNo} 
+	   	AND b.GUBUN = 'N'
+	</select>
+	
+	<insert id="chBoardInsert" parameterType="ChannelBoardVO" useGeneratedKeys="true">
+		
+		<selectKey keyProperty="brdNo" resultType="int" order="BEFORE">
+			select seq_board.nextval from dual
+		</selectKey>
+		
+		insert into board (
+			brd_no
+			, brd_wrtr
+			, brd_conts
+			, brd_rgdt
+			, brd_hit
+			, ch_no
+			, th_no
+			, brd_ttl
+			, brd_atch_file_id
+			, gubun
+		)	
+		values (
+			#{brdNo}
+			, #{brdWrtr}
+			, #{brdConts}
+			, sysdate
+			, #{brdHit}
+			, #{chNo}
+			, 0
+			, #{brdTtl}
+			, #{brdAtchFileId}
+			, 'B'
+			)
+					
+	</insert>
+	
+	<select id="chBoardSelect" parameterType="int" resultMap="chBoardMap">
+		SELECT
+			b.BRD_NO
+			, b.BRD_WRTR
+			, b.BRD_CONTS
+			, b.BRD_ATCH_FILE_ID
+			, b.BRD_RGDT
+			, b.BRD_HIT
+			, b.CH_NO
+			, b.TH_NO
+			, b.BRD_TTL
+			, m.MEM_NAME BRD_WRTR_NM
+			, m.MEM_PRFLIMG
+			, a.ATCH_DETAIL_FILE_ID
+			, a.ATCH_FILE_PATH
+			, a.ATCH_FILE_EXTN
+			, a.ATCH_FILE_ORGNL_NM
+		FROM
+			BOARD b
+		JOIN
+			MEMBER m ON b.BRD_WRTR = m.MEM_NO
+			left outer join atch_file a on b.brd_atch_file_id = a.atch_file_id
+       		left outer join atch_file_detail a on b.brd_atch_file_id = a.atch_file_id
+		WHERE b.BRD_NO = #{brdNo}
+	</select>
+	 	
+	<delete id="deleteChb" parameterType="int">
+		delete from board
+		where brd_no = #{brdNo}
+	</delete>
+	
+	<update id="chBoardUpdate" parameterType="ChannelBoardVO">
+		update board
+		set
+			brd_ttl = #{brdTtl},
+			brd_conts = #{brdConts},
+			brd_rgdt = sysdate
+		where
+			brd_no = #{brdNo}
+	</update>
+	
+	<update id="incrementHit" parameterType="int">
+		update board
+		set
+			brd_hit = brd_hit + 1
+		where brd_no = #{brdNo}
+	</update>
+		
+	<delete id="chBoardDelete" parameterType="ChannelBoardVO">
+		delete from board
+		where brd_no = #{brdNo}
+	</delete>
+	
+	
+</mapper>

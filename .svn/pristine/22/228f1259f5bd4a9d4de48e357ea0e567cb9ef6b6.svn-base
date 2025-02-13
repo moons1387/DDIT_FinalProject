@@ -1,0 +1,16 @@
+package kr.or.ddit.components.drive.service;
+
+import java.util.List;
+
+import kr.or.ddit.components.channel.vo.ChannelMemberVO;
+import kr.or.ddit.components.file.vo.AtchFileDetailVO;
+
+public interface IDriveMapper {
+
+	public List<ChannelMemberVO> getChList(ChannelMemberVO channelMemberVO);
+
+	public List<ChannelMemberVO> getThList(ChannelMemberVO channelMemberVO);
+
+	public List<AtchFileDetailVO> getFileList(ChannelMemberVO channelMemberVO);
+
+}

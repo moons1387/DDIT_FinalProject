@@ -1,0 +1,54 @@
+package kr.or.ddit.components.calendar.service.impl;
+
+import java.util.List;
+
+import javax.inject.Inject;
+
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Service;
+
+import kr.or.ddit.components.calendar.service.ICalMapper;
+import kr.or.ddit.components.calendar.service.ICalService;
+import kr.or.ddit.components.calendar.vo.CalVO;
+
+@Primary
+@Service
+public class CalServiceImpl implements ICalService {
+
+	@Inject
+	private ICalMapper mapper;
+	
+	@Override
+	public List<CalVO> list(CalVO cal) {
+		// 전체 일정
+		if((cal.getSchdlCd()).equals("0")) {
+			return mapper.list(cal);
+		}
+		// 개인 또는 조직
+		else {
+			return mapper.gubunList(cal);
+		}
+	}
+
+	@Override
+	public void insert(CalVO cal) {
+		mapper.insert(cal);
+		
+	}
+
+	@Override
+	public CalVO selectone(int schdlNo) {
+		return mapper.selectone(schdlNo);
+	}
+
+	@Override
+	public void update(CalVO cal) {
+		mapper.update(cal);
+	}
+
+	@Override
+	public void delete(int schdlNo) {
+		mapper.delete(schdlNo);
+	}
+
+}

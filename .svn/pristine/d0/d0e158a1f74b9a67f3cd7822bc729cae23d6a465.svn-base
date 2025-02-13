@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.login.service.ILoginMapper">
+
+	<resultMap type="MemberVO" id="MemberMap">
+		<id property="memNo" column="mem_no" />
+		<result property="memNo" column="mem_no" />
+		<result property="memId" column="mem_id" />
+		<result property="memPw" column="mem_pw" />
+		<result property="memName" column="mem_name" />
+		<result property="memPrflimg" column="mem_prflimg" />
+		<result property="memEmail" column="mem_email" />
+		<result property="memPh" column="mem_ph" />
+		<result property="memAddr1" column="mem_addr1" />
+		<result property="memAddr2" column="mem_addr2" />
+		<result property="memPstCd" column="mem_pst_cd" />
+		<result property="memAgree" column="mem_agree" />
+		<result property="memIntr" column="mem_intr" />
+		<result property="memAutograph" column="mem_autograph" />
+		<result property="memRgdt" column="mem_rgdt" />
+		<result property="memStatus" column="mem_status" />
+		<result property="memDrmnt" column="mem_drmnt" />
+		<result property="memShtot" column="mem_shtot" />
+		<result property="enabled" column="enabled" />
+		<result property="rememberLogin" column="remember_login" />
+		<result property="rememberId" column="remember_id" />
+		<collection property="authList" resultMap="roleMap" />
+	</resultMap>
+
+	<resultMap type="RoleVO" id="roleMap">
+		<result property="roleNo" column="role_no" />
+		<result property="memAuth" column="mem_auth" />
+		<result property="memNo" column="mem_no" />
+	</resultMap>
+
+	<select id="loginCheck" parameterType="MemberVO">
+		select
+		mem_no, mem_id, mem_pw, mem_name, mem_prflimg, mem_email, mem_ph, mem_addr1, mem_addr2, mem_pst_cd, mem_agree, mem_intr, mem_autograph, mem_rgdt, mem_status, mem_drmnt, mem_shtot, enabled, remember_login, remember_id
+		from member
+		where mem_id = #{memId}
+		and mem_pw =#{memPw}
+	</select>
+
+	<select id="readByUserId" parameterType="string" resultMap="MemberMap">
+		select
+		m.mem_no, mem_id, mem_pw, mem_name, mem_prflimg, mem_email, mem_ph,
+		mem_addr1, mem_addr2, mem_pst_cd, mem_agree, mem_intr, mem_autograph, mem_rgdt, mem_status,
+		mem_drmnt, mem_shtot,enabled, remember_login, remember_id, mem_auth
+		from member m left outer join role r on(m.mem_no = r.mem_no)
+		where mem_id = #{memId}
+	</select>
+
+	<select id="findId" parameterType="MemberVO" resultType="String">
+		select mem_id
+		from member
+		where mem_name = #{memName}
+		<if test="memEmail != null and memEmail != ''">
+			and mem_email = #{memEmail}
+		</if>
+		<if test="memPh != null and memPh != ''">
+			and mem_ph = #{memPh}
+		</if>
+	</select>
+	
+	<select id="idCheck" resultType="MemberVO">
+		select
+			mem_no, mem_id, mem_pw, mem_name, mem_prflimg, mem_email, mem_ph, mem_addr1, mem_addr2, mem_pst_cd, mem_agree, 
+			mem_intr, mem_autograph, mem_status, mem_drmnt, mem_shtot, enabled, remember_login, remember_id
+		from member
+		where mem_id = #{memId}
+	</select>
+	
+	<insert id="signupProfile" parameterType="MemberVO" useGeneratedKeys="true">
+		<selectKey keyProperty="memNo" resultType="int" order="BEFORE">
+			select seq_member.nextval from dual
+		</selectKey>
+		insert into member(
+			mem_no, mem_id, mem_pw, mem_name, mem_prflimg, mem_email, mem_ph, mem_addr1, mem_addr2, mem_pst_cd, mem_agree, 
+			mem_intr
+		)values(
+			#{memNo}, #{memId}, #{memPw}, #{memName}, #{memPrflimg}, #{memEmail}, #{memPh}, #{memAddr1}, #{memAddr2}, #{memPstCd}, #{memAgree}, 
+			#{memIntr} 
+		)
+	</insert>
+	
+	<select id="find" parameterType="MemberVO" resultType="MemberVO">
+		select mem_id, mem_pw, mem_email, mem_ph
+		from member
+		where mem_name = #{memName}
+		and mem_id = #{memId}
+		<if test="memEmail != null and memEmail != ''">
+			and mem_email = #{memEmail}
+		</if>
+		<if test="memPh != null and memPh != ''">
+			and mem_ph = #{memPh}
+		</if>
+	</select>
+	
+	<insert id="signupAuth" parameterType="RoleVO" useGeneratedKeys="true">
+		<selectKey keyProperty="roleNo" resultType="int" order="BEFORE">
+			select seq_role.nextval from dual
+		</selectKey>
+		insert into role(
+			role_no, mem_auth, mem_no
+		)values(
+			#{roleNo}, 'ROLE_MEMBER', #{memNo}
+		)
+	</insert>
+	
+	<update id="updatePw" parameterType="String">
+		UPDATE member
+		SET
+    	mem_pw = #{memPw}
+		WHERE
+    	mem_id = #{memId}
+	</update>
+	
+	<select id="phoneCheck" parameterType="String" resultType="int">
+		select count(*) from member
+		where mem_ph = #{userPhoneNumber}
+	</select>
+	
+	<insert id="signupProfileAdmin" parameterType="MemberVO" useGeneratedKeys="true"> 
+		<selectKey keyProperty="memNo" resultType="int" order="BEFORE">
+			select seq_member.nextval from dual
+		</selectKey>
+		insert into member(
+			mem_no, mem_id, mem_pw
+		)values(
+			#{memNo}, #{memId}, #{memPw}
+		)
+	</insert>
+	
+	<insert id="signupAuthAdmin" parameterType="RoleVO" useGeneratedKeys="true">
+		<selectKey keyProperty="roleNo" resultType="int" order="BEFORE">
+			select seq_role.nextval from dual
+		</selectKey>
+		insert into role(
+			role_no, mem_auth, mem_no
+		)values(
+			#{roleNo}, 'ROLE_ADMIN', #{memNo}
+		)
+	</insert>
+	
+</mapper>

@@ -1,0 +1,17 @@
+package kr.or.ddit.components.facechat.service;
+
+import java.util.List;
+
+import kr.or.ddit.components.facechat.vo.FaceChatVO;
+
+public interface IFaceChatMapper {
+
+	public List<FaceChatVO> faceChatList();
+
+	public void create(FaceChatVO faceChatVO);
+
+	public void closeRoom(String id);
+
+	public int isTitleExist(String title);
+	
+}

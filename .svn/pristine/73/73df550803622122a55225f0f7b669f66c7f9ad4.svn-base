@@ -1,0 +1,212 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://www.springframework.org/security/tags" prefix="sec" %>
+<%@ page session="false"%>
+<c:set value="${pageContext.request.contextPath }" var="contextPath" />
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<div class="auth-login-shape-box position-relative">
+		<div class="d-flex align-items-center justify-content-center w-100 z-1 position-relative">
+			<div class="card auth-card mt-6 mb-6 mx-3" style="width: 700px">
+				<div class="card-body">
+					<a href="../horizontal/index.html" class="text-nowrap logo-img text-center d-flex align-items-center justify-content-center mb-5 w-100">
+						<img src="${contextPath }/resources/assets/images/logos/logo2.png" style="object-fit: cover; width: 100%; height: 100%;" class="light-logo" alt="Logo-Dark" /> 
+						<img src="${contextPath }/resources/assets/images/logos/logo2.png" style="object-fit: cover; width: 100%; height: 100%;" class="dark-logo" alt="Logo-light" />
+					</a>
+					<div class="row">
+						<form action="${contextPath}/login/signup_terms.do" method="post" id="termsForm">
+							<div class="col-12">
+				                <!-- start Person Info -->
+				                <div class="card" style="display: flex;">
+				                  <div class="card-header text-bg-primary d-flex align-items-center justify-content-between">
+				                    <h4 class="mb-0 text-white">이용약관 동의</h4>
+				                    <nav id="navbar-example2" class="navbar navbar-light px-3">
+				                      <ul class="nav nav-pills">
+				                        <li class="nav-item">
+				                          <a class="nav-link" href="#one">
+				                            <i class="ti ti-circle-number-1"></i> 
+				                          </a>
+				                        </li>
+				                        <li class="nav-item">
+				                          <a class="nav-link" href="#two">
+				                            <i class="ti ti-circle-number-2"></i> 
+				                          </a>
+				                        </li>
+				                        <li class="nav-item">
+				                          <a class="nav-link" href="#three">
+				                            <i class="ti ti-circle-number-3"></i> 
+				                          </a>
+				                        </li>
+				                      </ul>
+				                    </nav>
+				                  </div>
+<!-- 				                  <form> -->
+				                    <div>
+				                      <div class="card-body">
+				                        <div class="col-lg-12 d-flex align-items-stretch">
+				                          <!--  start Scrollspy in navbar -->
+				                          <div class="card w-100">
+				                            <div class="card-body">
+				                              <h5 class="card-title"><i class="ti ti-circle-dot"></i>&nbsp;약관 동의</h5>
+				                                <div class="position-relative mt-3 p-3 border overflow-auto" style="height: 200px" data-bs-target="#navbar-example2" data-bs-offset="0" tabindex="0">
+				                                  <strong id="one">one</strong>
+				                                  <p>
+				                                    Occaecat commodo aliqua delectus. Fap craft beer
+				                                    deserunt skateboard ea. Lomo bicycle rights adipisicing
+				                                    banh mi, velit ea sunt next level locavore single-origin
+				                                    coffee in magna veniam. High life id vinyl, echo park
+				                                    consequat quis aliquip banh mi pitchfork. Vero VHS est
+				                                    adipisicing. Consectetur nisi DIY minim messenger bag.
+				                                    Cred ex in, sustainable delectus consectetur fanny pack
+				                                    iphone.
+				                                  </p>
+				                                </div>
+				                                <div class="form-check form-check-inline mt-2">
+				                                  <input class="form-check-input success" type="checkbox" id="check1" name="chk" value="option1">
+				                                  <label class="form-check-label" for="success2-check">이용약관에 동의합니다.<font color="#4BD08B">(필수)</font></label>
+				                                </div>
+				                            </div>
+				                            <div class="card-body">
+				                              <h5 class="card-title"><i class="ti ti-circle-dot"></i>&nbsp;개인정보 수집 이용 조회 동의</h5>
+				                                <div class="position-relative mt-3 p-3 border overflow-auto" style="height: 200px" data-bs-target="#navbar-example2" data-bs-offset="0" tabindex="0">
+				                                  <strong id="two">two</strong>
+				                                  <p>
+				                                    In incididunt echo park, officia deserunt mcsweeney's
+				                                    proident master cleanse thundercats sapiente veniam.
+				                                    Excepteur VHS elit, proident shoreditch +1 biodiesel
+				                                    laborum craft beer. Single-origin coffee wayfarers irure
+				                                    four loko, cupidatat terry richardson master cleanse.
+				                                    Assumenda you probably haven't heard of them art party
+				                                    fanny pack, tattooed nulla cardigan tempor ad. Proident
+				                                    wolf nesciunt sartorial keffiyeh eu banh mi sustainable.
+				                                    Elit wolf voluptate, lo-fi ea portland before they sold
+				                                    out four loko. Locavore enim nostrud mlkshk brooklyn
+				                                    nesciunt.
+				                                  </p>
+				                                </div>
+				                                <div class="form-check form-check-inline mt-2">
+				                                  <input class="form-check-input success" type="checkbox" id="check2" name="chk" value="option2">
+				                                  <label class="form-check-label" for="success2-check">위와 같이 본인의 개인정보를 수집·이용하는 것에 동의합니다.<font color="#4BD08B">(필수)</font></label>
+				                                </div>
+				                            </div>
+				                            <div class="card-body">
+				                              <h5 class="card-title"><i class="ti ti-circle-dot"></i>&nbsp;정책정보 제공을 위한 수집 및 이용 동의</h5>
+				                                <div class="position-relative mt-3 p-3 border overflow-auto" style="height: 200px" data-bs-target="#navbar-example2" data-bs-offset="0" tabindex="0">
+				                                  <strong id="three">three</strong>
+				                                  <p>
+				                                    Ad leggings keytar, brunch id art party dolor labore.
+				                                    Pitchfork yr enim lo-fi before they sold out qui. Tumblr
+				                                    farm-to-table bicycle rights whatever. Anim keffiyeh
+				                                    carles cardigan. Velit seitan mcsweeney's photo booth 3
+				                                    wolf moon irure. Cosby sweater lomo jean shorts,
+				                                    williamsburg hoodie minim qui you probably haven't heard
+				                                    of them et cardigan trust fund culpa biodiesel wes
+				                                    anderson aesthetic. Nihil tattooed accusamus, cred irony
+				                                    biodiesel keffiyeh artisan ullamco consequat.
+				                                  </p>
+				                                </div>
+				                                <div class="form-check form-check-inline mt-2">
+				                                  <input class="form-check-input success" type="checkbox" id="check3" name="chk" value="option3">
+				                                  <label class="form-check-label" for="success2-check">정책정보 제공을 위한 개인정보 수집·이용하는 것에 동의합니다.<font color="#4BD08B">(필수)</font></label>
+				                                </div>
+				                            </div>
+				
+				                          </div>
+				                          <!--  end Scrollspy in navbar -->
+				                        </div>
+				                        <div class="d-flex justify-content-center mt-2">
+										  <div class="form-check form-check-inline">
+										    <input class="form-check-input success" type="checkbox" id="checkAll" name="checkAll" required="required">
+										    <label class="form-check-label" for="checkAll">위 약관에 전체 동의합니다.</label>
+										    <input type="hidden" name="memAgree" id="memAgree" value="N">
+										  </div>
+										</div>
+
+				                        <!--/row-->
+				                      </div>
+				                    </div>
+<!-- 				                  </form> -->
+				                </div>
+				                <!-- end Person Info -->
+				              </div>
+
+		                      <div class="form-actions">
+		                        <div class="card-body border-top d-flex justify-content-center">
+								 <button type="submit" class="btn bg-danger-subtle text-danger" style="padding-left: 60px; padding-right: 60px;">
+								     Cancel
+								 </button>
+								  <button type="button" class="btn btn-primary ms-3" id="agreeBtn" disabled="disabled" style="padding-left: 70px; padding-right: 70px;">
+								    Next
+								  </button>
+								</div>
+		                      </div>
+							<div class="d-flex justify-content-center align-items-center">
+							    <p class="fs-4 mb-0 text-dark">Already have an Account?</p>
+							    <a class="text-primary fw-medium ms-2" href="${contextPath}/login.do">Login</a>
+							</div>
+						<sec:csrfInput/>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+	
+    $('#checkAll').change(function() {	// 전체 체크박스가 변경되었을 때 이벤트 처리
+        const isChecked = $(this).is(':checked');	 // 전체 체크박스의 체크 상태 가져오기
+        $('#check1, #check2, #check3').prop('checked', isChecked);	// 개별 체크박스의 체크 상태를 전체 체크박스의 상태에 맞게 설정
+        $('.form-check-input.success').each(function(index) {	 // 모든 체크박스의 상태에 따라 링크에 active 클래스 추가/제거
+            if (this.checked) {
+                $('.nav-link').eq(index).addClass('active');	// 체크된 경우 active 클래스 추가
+            } else {
+                $('.nav-link').eq(index).removeClass('active');	// 체크 해제된 경우 active 클래스 제거
+            }
+        });
+        $('#agreeBtn').prop('disabled', !isChecked);	// 전체 체크박스 상태에 따라 agreeBtn 버튼 활성화
+        $('#memAgree').val(this.checked ? 'Y' : 'N');
+    });
+
+    $('.form-check-input.success').change(function() {	// 개별 체크박스의 상태가 변경될 때 이벤트 처리
+        const index = $('.form-check-input.success').index(this);	// 현재 체크박스의 인덱스 가져오기
+
+        if (this.checked) {
+            $('.nav-link').eq(index).addClass('active');	// 체크박스가 체크된 경우 active 클래스 추가
+        } else {
+            $('.nav-link').eq(index).removeClass('active');	// 체크박스가 체크 해제된 경우 active 클래스 제거
+        }
+
+        // 개별 체크박스가 모두 체크되었는지 확인
+        const allChecked = $('#check1').is(':checked') && $('#check2').is(':checked') && $('#check3').is(':checked');
+        $('#checkAll').prop('checked', allChecked);		// 모두 체크된 경우 전체 체크박스도 체크
+        $('#agreeBtn').prop('disabled', !allChecked);	// 모든 체크박스가 체크되었을 때만 agreeBtn 버튼 활성화
+    });
+});
+
+$(function(){
+    var termsForm = $("#termsForm");
+    var agreeBtn = $("#agreeBtn");
+
+    agreeBtn.on("click", function(){
+        var allChecked = $('#check1').is(':checked') && $('#check2').is(':checked') && $('#check3').is(':checked') && $('#checkAll').is(':checked');
+        
+        // 전체 체크박스가 체크되어 있지 않으면 경고 메시지 표시
+        if (!allChecked) {
+            alert("SynerHUB의 이용 약관에 동의해 주세요");
+            return;
+        }
+        termsForm.submit(); 
+    });
+});
+
+</script>
+
+</html>

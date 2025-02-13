@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.board.qna.service.IQnaMapper">
+	
+	<resultMap type="QnaVO" id="qnaMap">
+		<id property="qnaNo" column="qna_no"/>
+		<result property="qnaNo" column="qna_no" />
+		<result property="qnaCategory" column="qna_category" />
+		<result property="qnaTtl" column="qna_ttl" />
+		<result property="qnaConts" column="qna_conts" />
+		<result property="qnaDt" column="qna_dt" />
+		<result property="qnaWtr" column="qna_wtr" />
+		<result property="qnaAtchFileId" column="qna_atch_file_id" />
+		<result property="ansConts" column="ans_conts" />
+		<result property="ansDt" column="ans_dt" />
+		<result property="ansWtr" column="ans_wtr" />
+		<result property="ansState" column="ans_state" />
+		<result property="qnaWtrName" column="qnaWtrName" />
+		<result property="qnaWtrPrflimg" column="qnaWtrPrflimg" />
+		<result property="chMemNm" column="chMemNm" />
+		
+		<collection property="fileSrcList" resultMap="fileSrcMap"></collection>
+	</resultMap>
+	
+	<resultMap type="AtchFileDetailVO" id="fileSrcMap">
+		<id property="atchDetailFileId" column="atch_detail_file_id"/>
+		<result property="atchDetailFileId" column="atch_detail_file_id"/>
+		<result property="atchFilePath" column="atch_file_path"/>
+		<result property="atchFileExtn" column="atch_file_extn"/>
+		<result property="atchFileOrgnlNm" column="atch_file_orgnl_nm"/>
+	</resultMap>
+	
+	<select id="qnaList" resultMap="qnaMap">
+		SELECT
+		    q.qna_no
+		   ,q.qna_category
+		   ,q.qna_ttl
+		   ,q.qna_conts
+		   ,to_char(q.qna_dt , 'YYYY.MM.DD') qna_dt
+		   ,m.mem_name qnaWtrName
+		   ,m.mem_prflimg qnaWtrPrflimg
+		   ,cm.ch_mem_nm chMemNm
+		   ,q.qna_atch_file_id
+		   ,q.ans_conts
+		   ,q.ans_dt
+		   ,q.ans_wtr
+		   ,q.ans_state
+		   ,q.ans_atch_file_id
+		FROM
+		    qna q, member m, channel_member cm
+		WHERE 
+			q.qna_wtr = m.mem_no
+		<if test="qnaWtr != null and qnaWtr != ''">
+        AND 
+			q.qna_wtr = #{qnaWtr}
+        </if>
+        AND
+        	m.mem_no = cm.mem_no    
+		order by qna_dt desc, qna_no desc
+	</select>
+	
+	
+	<select id="selectQna" parameterType="int" resultMap="qnaMap">
+		select  
+			q.qna_no
+		   ,q.qna_category
+		   ,q.qna_ttl
+		   ,q.qna_conts
+		   ,to_char(q.qna_dt, 'YYYY.MM.DD') qna_dt
+		   ,m.mem_name qnaWtrName
+		   ,m.mem_prflimg qnaWtrPrflimg
+		   ,q.qna_atch_file_id
+		   ,q.ans_conts
+		   ,q.ans_dt
+		   ,q.ans_wtr
+		   ,q.ans_state
+		   ,q.ans_atch_file_id
+           , afd.atch_detail_file_id
+           , afd.atch_file_path
+           , afd.atch_file_extn
+           , afd.atch_file_orgnl_nm
+		from qna q
+		join member m on q.qna_wtr = m.mem_no
+		left outer join atch_file af on q.qna_atch_file_id = af.atch_file_id
+		left outer join atch_file_detail afd on afd.atch_file_id = af.atch_file_id
+		where q.qna_no = #{qnaNo}
+	</select>
+	
+	
+	<delete id="deleteQna" parameterType="int">
+		DELETE FROM qna
+		WHERE 
+			qna_no = #{qnaNo}
+	</delete>
+	
+	
+	<update id="modifyQna" parameterType="QnaVO">
+		UPDATE qna
+		SET
+			qna_ttl = #{qnaTtl},
+			qna_conts = #{qnaConts},
+			qna_dt = sysdate
+		WHERE qna_no = #{qnaNo}
+	</update>
+	
+	
+	<insert id="insertQna" parameterType="QnaVO" useGeneratedKeys="true">
+		<selectKey keyProperty="qnaNo" resultType="int" order="BEFORE">
+			select seq_qna.nextval from dual
+		</selectKey>
+		INSERT INTO qna (
+		    qna_no
+		   ,qna_category
+		   ,qna_ttl
+		   ,qna_conts
+		   ,qna_dt
+		   ,qna_wtr
+		   ,ans_state
+		   ,QNA_ATCH_FILE_ID
+		) VALUES (
+		    #{qnaNo}
+		   ,#{qnaCategory}
+		   ,#{qnaTtl}
+		   ,#{qnaConts}
+		   ,sysdate
+		   ,#{qnaWtr}
+		   ,0
+		   ,#{qnaAtchFileId}
+		)
+	</insert>
+	
+	
+	<sql id="qnaSearch">
+		<if test="searchWord != null and searchType == 'title'">
+			and (qna_ttl like '%'||#{searchWord}||'%')
+		</if>
+		<if test="searchWord != null and searchType == 'content'">
+			and (qna_conts like '%'||#{searchWord}||'%')
+		</if>
+		<if test="searchWord != null and searchType == 'writer'">
+			and (m.mem_name like '%'||#{searchWord}||'%')
+		</if>
+		<if test="searchWord != null and searchType == 'category'">
+        and (CASE 
+            WHEN qna_category = 1 THEN '서비스'
+            WHEN qna_category = 2 THEN '계정'
+            WHEN qna_category = 3 THEN '결제·환불'
+            WHEN qna_category = 4 THEN '오류 보고'
+            WHEN qna_category = 5 THEN '신고 접수'
+            ELSE '기타' 
+        END like '%' || #{searchWord} || '%')
+    </if>
+	</sql>
+	
+	<select id="selectQnaCount" parameterType="PaginationInfoVO" resultType="int">
+		select 
+			count(q.qna_no)
+		from 
+			qna q
+		join member m on q.qna_wtr = m.mem_no
+		where 
+			1=1
+		<include refid="qnaSearch"/>
+	</select>
+	
+	<select id="selectQnaList" parameterType="PaginationInfoVO" resultType="QnaVO">
+		select
+			b.*
+		from(
+			select
+				a.*, row_number() over (order by a.qna_no desc) rnum
+			from (
+				select
+					q.qna_no
+				   ,q.qna_category
+				   ,q.qna_ttl qna_ttl
+				   ,q.qna_conts qna_conts
+				   ,to_char(q.qna_dt , 'YYYY.MM.DD') qna_dt
+				   ,m.mem_name qnaWtrName
+				   ,m.mem_prflimg qnaWtrPrflimg
+				   ,q.qna_atch_file_id
+				   ,q.ans_conts
+				   ,q.ans_dt
+				   ,q.ans_wtr
+				   ,q.ans_state
+				   ,q.ans_atch_file_id
+				from 
+					qna q, member m
+				where 
+					q.qna_wtr = m.mem_no
+				<include refid="qnaSearch"/>
+				order by qna_dt desc, q.qna_no desc 
+			) a
+		) b
+		<![CDATA[
+			where b.rnum >= #{startRow} and b.rnum <= #{endRow}
+		]]>
+		order by qna_dt desc
+	</select>
+	
+	
+	<!-- 임시 관리자용 insert --> 
+	<update id="adminInsertQna" parameterType="QnaVO">
+		UPDATE qna
+		SET
+			ans_conts = #{ansConts},
+			ans_dt = sysdate,
+			ans_wtr = #{ansWtr},
+			ans_state = 1
+		WHERE qna_no = #{qnaNo}
+	</update>
+	
+	<!-- 임시 관리자용 update --> 
+	<update id="updateQna" parameterType="QnaVO">
+		UPDATE qna
+		SET
+			ans_conts = #{ansConts},
+			ans_dt = sysdate,
+			ans_wtr = #{ansWtr},
+			ans_state = 1
+		WHERE qna_no = #{qnaNo}
+	</update>
+	
+	
+	<select id="qnaStats" resultType="QnaStatsVO">
+	    SELECT
+	        qna_category AS qnaCategory,
+	        COUNT(*) AS count
+	    FROM
+	        qna
+	    GROUP BY 
+	        qna_category
+	    ORDER BY
+	    	qna_category ASC
+	</select>
+	
+	
+	<!-- 월별 Q&A 통계 -->
+	<select id="qnaStatsPerMonth" parameterType="int" resultType="QnaStatsVO">
+	    SELECT
+	        qna_category AS qnaCategory,
+	        COUNT(*) AS count
+	    FROM
+	        qna
+	    WHERE
+	        EXTRACT(MONTH FROM qna_dt) = #{month}
+	    GROUP BY 
+	        qna_category
+	    ORDER BY
+	        qna_category ASC
+	</select>
+	
+	<!-- 총 게시글 수 -->
+	<select id="getTotalPosts" resultType="int">
+	    SELECT COUNT(*) FROM qna 
+	</select>
+	
+	
+	<!-- 답변이 없는 질문의 개수를 세는 쿼리 -->
+    <select id="getUnansweredCount" resultType="QnaVO">
+        select
+                    q.qna_no,
+                    q.qna_category,
+                    q.qna_ttl as qna_ttl,
+                    q.qna_conts as qna_conts,
+                    to_char(q.qna_dt, 'YYYY.MM.DD') as qna_dt,
+                    m.mem_name as qnaWtrName,
+                    m.mem_prflimg as qnaWtrPrflimg,
+                    q.qna_atch_file_id,
+                    q.ans_conts,
+                    q.ans_dt,
+                    q.ans_wtr,
+                    q.ans_state,
+                    q.ans_atch_file_id
+                from 
+                    qna q
+                join 
+                    member m on q.qna_wtr = m.mem_no
+                where 
+                    q.ans_state = 0 
+    </select>
+
+    <!-- 답변이 없는 질문 목록을 가져오는 쿼리 -->
+    <select id="selectUnAQnaList" parameterType="PaginationInfoVO" resultType="QnaVO">
+        select
+            b.*
+        from (
+            select
+                a.*, row_number() over (order by a.qna_no desc) rnum
+            from (
+                select
+                    q.qna_no,
+                    q.qna_category,
+                    q.qna_ttl as qna_ttl,
+                    q.qna_conts as qna_conts,
+                    to_char(q.qna_dt, 'YYYY.MM.DD') as qna_dt,
+                    m.mem_name as qnaWtrName,
+                    m.mem_prflimg as qnaWtrPrflimg,
+                    q.qna_atch_file_id,
+                    q.ans_conts,
+                    q.ans_dt,
+                    q.ans_wtr,
+                    q.ans_state,
+                    q.ans_atch_file_id
+                from 
+                    qna q
+                join 
+                    member m on q.qna_wtr = m.mem_no
+                where 
+                    q.ans_state = 0  <!-- ansState가 0인 조건 추가 -->
+                <include refid="qnaSearch"/>
+                order by qna_dt asc, q.qna_no asc 
+            ) a
+        ) b
+        <![CDATA[
+            where b.rnum >= #{startRow} and b.rnum <= #{endRow}
+        ]]>
+        order by qna_dt asc
+    </select>
+    
+    
+    <select id="selectUnAQnaCount" parameterType="PaginationInfoVO" resultType="int">
+		select 
+			count(q.qna_no)
+		from 
+			qna q
+		join member m on q.qna_wtr = m.mem_no
+		where 
+			q.ans_state = 0
+		<include refid="qnaSearch"/>
+	</select>
+	
+	
+</mapper>

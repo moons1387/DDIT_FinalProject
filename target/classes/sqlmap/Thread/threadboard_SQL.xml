@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.threadboard.service.IThreadBoardMapper"> 
+	<resultMap type="ThreadBoardVO" id="thboardMap">
+		<id property="brdNo" column="BRD_NO"/>
+		<result property="rnum"  column="RNUM"/>
+		<result property="brdNo" column="BRD_NO" />
+		<result property="thNo" column="TH_NO" />
+		<result property="chNo" column="CH_NO" />
+		<result property="brdTtl" column="BRD_TTL" />
+		<result property="brdWrtr" column="BRD_WRTR" />
+		<result property="brdConts" column="BRD_CONTS" />
+		<result property="brdRgdt" column="BRD_RGDT" />
+		<result property="brdHit" column="BRD_HIT" />
+		<result property="tmp" column="TMP" />
+		<result property="gubun" column="GUBUN"/>
+		<result property="brdAtchFileId" column="BRD_ATCH_FILE_ID" />
+		<result property="memPrflimg" column="MEM_PRFLIMG" />
+		<result property="thTtl" column="TH_TTL" />
+		<result property="thPw" column="TH_PW" />
+		<result property="thRgdt" column="TH_RGDT" /> 
+		<result property="thClr" column="TH_CLR" />
+		<result property="brdWrtrNm" column="MEM_NAME" />
+		<collection property="thboardFileDetail" resultMap="thboardFileDetailMap"></collection>
+	</resultMap>
+	
+	<resultMap type="AtchFileDetailVO" id="thboardFileDetailMap">
+      <id property="atchDetailFileId" column="atch_detail_file_id"/>
+      <result property="atchDetailFileId" column="atch_detail_file_id"/>
+      <result property="atchFilePath" column="atch_file_path"/>
+      <result property="atchFileExtn" column="atch_file_extn"/>
+      <result property="atchFileOrgnlNm" column="atch_file_orgnl_nm"/>
+   </resultMap>
+	
+	<select id="thboardlist" parameterType="ThreadBoardVO" resultMap="thboardMap">
+
+		SELECT
+			b.BRD_NO, b.BRD_WRTR, b.BRD_CONTS, b.BRD_ATCH_FILE_ID, b.BRD_RGDT, b.BRD_HIT,
+			b.TMP, b.CH_NO, b.TH_NO, b.BRD_TTL, b.gubun,
+			t.TH_TTL, t.TH_PW, t.TH_RGDT, t.TH_CLR, m.mem_name
+		FROM
+			BOARD b
+		JOIN
+			CHANNEL_THREAD t ON b.TH_NO = t.th_NO
+		JOIN
+			MEMBER m ON b.brd_wrtr = m.mem_no
+		WHERE
+			b.TH_NO = #{thNo}
+		ORDER BY
+			b.BRD_RGDT DESC
+	</select>
+	
+	<select id="thboardFreeList" parameterType="kr.or.ddit.vo.PagingVO" resultMap="thboardMap">
+		select * 
+		from
+		        (select to_number(rownum) rnum, A.*
+		         from
+		                (SELECT
+		                         b.BRD_NO, b.BRD_WRTR, b.BRD_CONTS, b.BRD_ATCH_FILE_ID, b.BRD_RGDT, b.BRD_HIT,
+		                        b.TMP, b.CH_NO, b.TH_NO, b.BRD_TTL, b.gubun,
+		                        t.TH_TTL, t.TH_PW, t.TH_RGDT, t.TH_CLR, m.mem_name
+		                    FROM
+		                        BOARD b
+		                    JOIN
+		                        CHANNEL_THREAD t ON b.TH_NO = t.th_NO
+		                    JOIN
+		                        MEMBER m ON b.brd_wrtr = m.mem_no
+		                    WHERE
+		                        b.TH_NO = #{thNo}
+		                        and b.gubun = 'B'
+		                        <if test="searchTitle != null and searchTitle != ''">
+							        and BRD_TTL LIKE '%' || #{searchTitle} || '%'
+							    </if>
+		                    ORDER BY
+		                        b.BRD_RGDT DESC) A ) B
+		where 1=1
+		<![CDATA[   AND B.RNUM >= #{rowCnt} * (#{page}-1) + 1 AND B.RNUM <= #{rowCnt} * #{page}]]>
+	</select>
+
+	<select id="thboardFreeTotal" parameterType="kr.or.ddit.vo.PagingVO" resultType="int">
+
+		SELECT
+			count(*)
+		FROM
+			BOARD b
+		JOIN
+			CHANNEL_THREAD t ON b.TH_NO = t.th_NO
+		JOIN
+			MEMBER m ON b.brd_wrtr = m.mem_no
+		WHERE
+			b.TH_NO = #{thNo} 
+		and b.gubun ='B'
+		<if test="searchTitle != null and searchTitle != ''">
+	        and BRD_TTL LIKE '%' || #{searchTitle} || '%'
+	    </if>
+		ORDER BY
+			b.BRD_RGDT DESC
+
+	</select>
+	
+	<select id="thboardDailyList" parameterType="kr.or.ddit.vo.PagingVO" resultMap="thboardMap">
+		select * 
+		from
+		        (select to_number(rownum) rnum, A.*
+		         from
+		                (SELECT
+		                         b.BRD_NO, b.BRD_WRTR, b.BRD_CONTS, b.BRD_ATCH_FILE_ID, b.BRD_RGDT, b.BRD_HIT,
+		                        b.TMP, b.CH_NO, b.TH_NO, b.BRD_TTL, b.gubun,
+		                        t.TH_TTL, t.TH_PW, t.TH_RGDT, t.TH_CLR, m.mem_name
+		                    FROM
+		                        BOARD b
+		                    JOIN
+		                        CHANNEL_THREAD t ON b.TH_NO = t.th_NO
+		                    JOIN
+		                        MEMBER m ON b.brd_wrtr = m.mem_no
+		                    WHERE
+		                        b.TH_NO = #{thNo}
+		                        and b.gubun = 'D'
+		                        <if test="searchTitle != null and searchTitle != ''">
+							        and BRD_TTL LIKE '%' || #{searchTitle} || '%'
+							    </if>
+		                    ORDER BY
+		                        b.BRD_RGDT DESC) A ) B
+		where 1=1
+			<![CDATA[   AND B.RNUM >= #{rowCnt} * (#{page}-1) + 1 AND B.RNUM <= #{rowCnt} * #{page}]]>
+	</select>
+
+	<select id="thboardDailyTotal" parameterType="kr.or.ddit.vo.PagingVO" resultType="int">
+		SELECT
+			count(*)
+		FROM
+			BOARD b
+		JOIN
+			CHANNEL_THREAD t ON b.TH_NO = t.th_NO
+		JOIN
+			MEMBER m ON b.brd_wrtr = m.mem_no
+		WHERE
+			b.TH_NO = #{thNo}
+		and b.gubun ='D'
+		<if test="searchTitle != null and searchTitle != ''">
+	        and BRD_TTL LIKE '%' || #{searchTitle} || '%'
+	    </if>
+		ORDER BY
+			b.BRD_RGDT DESC
+	</select>
+	
+	<insert id="thboardInsert" parameterType="ThreadBoardVO" useGeneratedKeys="true">
+		<selectKey keyProperty="brdNo" resultType="int" order="BEFORE">
+				select seq_board.nextval from dual
+		</selectKey>
+		INSERT INTO board (
+		    brd_no,
+		    brd_wrtr,
+		    brd_conts,
+		    brd_rgdt, 
+		    brd_hit, 
+		    tmp, 
+		    ch_no,
+		    th_no,
+		    brd_ttl,
+		    BRD_ATCH_FILE_ID,
+		    GUBUN
+	) values (
+	    #{brdNo}, #{brdWrtr}, #{brdConts}, sysdate, #{brdHit}, #{tmp}, #{chNo}, #{thNo}, #{brdTtl}, #{brdAtchFileId},'B'
+	)
+	
+	</insert>	
+	
+	<select id="thboardSelect" parameterType="int" resultMap="thboardMap">
+	select
+		 b.brd_no
+        ,b.brd_wrtr
+        ,b.brd_conts
+        ,b.brd_atch_file_id
+        ,b.brd_rgdt
+        ,b.brd_hit
+        ,b.tmp
+        ,b.ch_no
+        ,b.th_no
+        ,b.brd_ttl
+        ,m.mem_name
+        ,m.mem_prflimg
+        ,a.atch_detail_file_id
+        ,a.atch_file_path
+        ,a.atch_file_extn
+        ,a.atch_file_orgnl_nm
+	from
+        board b 
+    JOIN
+       MEMBER m ON b.brd_wrtr = m.mem_no 
+       left outer join atch_file a on b.brd_atch_file_id = a.atch_file_id
+       left outer join atch_file_detail a on b.brd_atch_file_id = a.atch_file_id
+    where b.Brd_no = #{brdNo}
+	</select>
+	
+	<update id="incrementHit" parameterType="int">
+		update board
+		set
+			BRD_HIT = BRD_HIT + 1
+		where BRD_NO = #{brdNo}
+	</update>
+	
+	<update id="thboardUpdate" parameterType="ThreadBoardVO">
+			Update board
+        set
+	        BRD_TTL = #{brdTtl},
+	        BRD_CONTS =#{brdConts}
+        where 
+        	BRD_NO = #{brdNo}
+	</update>
+	
+	<select id="getThTtl" parameterType="int" resultType="string">
+		select th_ttl from channel_thread where th_no = #{thNo}
+	</select>
+	
+	<delete id="thBoardDelete" parameterType="ThreadBoardVO">
+		delete from board
+		where brd_no = #{brdNo}
+	</delete>
+	
+	<select id="thboardSearch" parameterType="ThreadBoardVO" resultType="ThreadBoardVO">
+		SELECT
+			b.BRD_NO, b.BRD_WRTR, b.BRD_CONTS, b.BRD_ATCH_FILE_ID, b.BRD_RGDT, b.BRD_HIT,
+			b.TMP, b.CH_NO, b.TH_NO, b.BRD_TTL, b.GUBUN,
+			t.TH_TTL, t.TH_PW, t.TH_RGDT, t.TH_CLR, m.mem_name brdWrtrNm
+		FROM
+			BOARD b
+		JOIN
+			CHANNEL_THREAD t ON b.TH_NO = t.th_NO
+		JOIN
+			MEMBER m ON b.brd_wrtr = m.mem_no
+		WHERE
+			b.TH_NO = #{thNo}
+		and
+            b.GUBUN = 'B'
+	    <if test="brdTtl != null and brdTtl != ''">
+	        and BRD_TTL LIKE '%' || #{brdTtl} || '%'
+	    </if>
+	     ORDER BY
+			b.BRD_RGDT DESC
+	</select>
+	
+	<select id="thboardFree" parameterType="ThreadBoardVO" resultType="ThreadBoardVO">
+		SELECT
+              b.BRD_NO, b.BRD_WRTR, b.BRD_CONTS, b.BRD_ATCH_FILE_ID, b.BRD_RGDT, b.BRD_HIT,
+             b.TMP, b.CH_NO, b.TH_NO, b.BRD_TTL, b.gubun,
+             t.TH_TTL, t.TH_PW, t.TH_RGDT, t.TH_CLR, m.mem_name brdWrtrNm
+         FROM
+             BOARD b
+         JOIN
+             CHANNEL_THREAD t ON b.TH_NO = t.th_NO
+         JOIN
+             MEMBER m ON b.brd_wrtr = m.mem_no
+         WHERE
+             b.TH_NO = #{thNo}
+             and b.gubun = 'B'
+         ORDER BY
+             b.BRD_RGDT DESC
+	</select>
+	
+	<select id="thboardDaily" parameterType="ThreadBoardVO" resultType="ThreadBoardVO">
+		SELECT
+              b.BRD_NO, b.BRD_WRTR, b.BRD_CONTS, b.BRD_ATCH_FILE_ID, b.BRD_RGDT, b.BRD_HIT,
+             b.TMP, b.CH_NO, b.TH_NO, b.BRD_TTL, b.gubun,
+             t.TH_TTL, t.TH_PW, t.TH_RGDT, t.TH_CLR, m.mem_name brdWrtrNm
+         FROM
+             BOARD b
+         JOIN
+             CHANNEL_THREAD t ON b.TH_NO = t.th_NO
+         JOIN
+             MEMBER m ON b.brd_wrtr = m.mem_no
+         WHERE
+             b.TH_NO = #{thNo}
+             and b.gubun = 'D'
+         ORDER BY
+             b.BRD_RGDT DESC
+	</select>
+	
+	
+	<select id="thboardAuthority" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*) 
+		  FROM CHANNEL_MEMBER cm 
+		 WHERE CH_MEM_TH_NO = #{synerhub2} 
+		   AND MEM_NO = #{synerhub1}
+	</select>
+	
+	
+</mapper>

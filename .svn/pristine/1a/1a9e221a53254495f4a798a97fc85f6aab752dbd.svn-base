@@ -1,0 +1,71 @@
+package kr.or.ddit.components.drive.web;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.inject.Inject;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import kr.or.ddit.ServiceResult;
+import kr.or.ddit.components.channel.service.IChannelService;
+import kr.or.ddit.components.channel.vo.ChannelMemberVO;
+import kr.or.ddit.components.channel.vo.ChannelThreadVO;
+import kr.or.ddit.components.channel.vo.ChannelVO;
+import kr.or.ddit.components.document.service.IDocumentService;
+import kr.or.ddit.components.document.vo.AplnVO;
+import kr.or.ddit.components.document.vo.DocumentVO;
+import kr.or.ddit.components.drive.service.IDriveService;
+import kr.or.ddit.components.file.vo.AtchFileDetailVO;
+import kr.or.ddit.vo.PagingVO;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@RestController
+@RequestMapping("/drive")
+public class DriveController {
+	
+	@Inject
+	private IDriveService service;
+
+	@PostMapping("/getList")
+	public ResponseEntity<Map<String, List<ChannelMemberVO>>> getList(@RequestBody ChannelMemberVO channelMemberVO){
+		Map<String, List<ChannelMemberVO>> map = new HashMap<String, List<ChannelMemberVO>>();
+		
+		List<ChannelMemberVO> chList = service.getChList(channelMemberVO);
+		
+		List<ChannelMemberVO> thList = service.getThList(channelMemberVO);
+		
+		
+		log.info("chList : " + chList);
+		log.info("thList : " + thList);
+		
+		map.put("chList", chList);
+		map.put("thList", thList);
+		
+		return new ResponseEntity<Map<String, List<ChannelMemberVO>>>(map, HttpStatus.OK);
+	}
+
+	
+	@PostMapping("/getFileList")
+	public ResponseEntity<List<AtchFileDetailVO>> getFileList(@RequestBody ChannelMemberVO channelMemberVO){
+		
+		List<AtchFileDetailVO> list = new ArrayList<AtchFileDetailVO>();
+		ServiceResult result = null;
+		
+		list = service.getFileList(channelMemberVO);
+		
+		return new ResponseEntity<List<AtchFileDetailVO>>(list, HttpStatus.OK);
+	}
+
+	
+}

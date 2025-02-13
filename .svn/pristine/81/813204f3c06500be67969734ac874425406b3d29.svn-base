@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.admin.channel.service.IChannelStatisticsMapper">
+	
+	<select id="getChTotal" resultType="int">
+		SELECT COUNT(*)
+		  FROM CHANNEL c
+	</select>
+	
+	<select id="getChList" resultType="ChannelDataVO">
+		SELECT A.CH_NO, C.CH_TTL, C.CH_CD, A.MEM_CNT, A.CUR_MEM_CNT, A.VOLUME FROM (
+		SELECT c.CH_NO 
+			 , COUNT(*) MEM_CNT
+			 , (SELECT COUNT(*)
+			 	  FROM MEMBER m 
+			 	  JOIN CHANNEL_MEMBER cm ON m.MEM_NO = cm.MEM_NO 
+			 	 WHERE MEM_STATUS = 1) CUR_MEM_CNT
+			 , ((SELECT NVL(SUM(ATCH_FILE_SIZE), 0) 
+				   FROM DOCUMENT D
+				   LEFT OUTER JOIN ATCH_FILE_DETAIL afd ON d.DOC_FILE_ID = afd.ATCH_FILE_ID
+				  WHERE D.CH_NO = C.CH_NO)
+			   +
+			   (SELECT NVL(SUM(ATCH_FILE_SIZE), 0)
+				  FROM EQUIPMENT E
+				  LEFT OUTER JOIN ATCH_FILE_DETAIL afd ON E.EQPMNT_ATCH_FILE_ID = AFD.ATCH_FILE_ID 
+				 WHERE E.CH_NO = C.CH_NO)
+			   +
+			   (SELECT NVL(SUM(ATCH_FILE_SIZE), 0)
+				  FROM BOARD b
+				  LEFT OUTER JOIN ATCH_FILE_DETAIL afd ON B.BRD_ATCH_FILE_ID = AFD.ATCH_FILE_ID 
+				 WHERE B.CH_NO = C.CH_NO)
+			   +
+			   (SELECT NVL(SUM(ATCH_FILE_SIZE), 0)
+				  FROM CLOUD CD 
+				  LEFT OUTER JOIN ATCH_FILE_DETAIL afd ON CD.CLD_FILE_NO = AFD.ATCH_DETAIL_FILE_ID
+				 WHERE CD.CH_NO = C.CH_NO)) VOLUME
+		  FROM CHANNEL c
+		  JOIN CHANNEL_MEMBER cm ON c.CH_NO = cm.CH_NO
+		 GROUP BY c.CH_NO) A 
+		  JOIN CHANNEL C ON A.CH_NO = C.CH_NO
+		 ORDER BY c.CH_NO
+	</select>
+
+</mapper>

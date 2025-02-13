@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.drive.service.IDriveMapper"> 
+
+	<select id="getChList" parameterType="ChannelMemberVO" resultType="ChannelMemberVO">
+		SELECT
+		        ch.ch_no
+		    ,   ch.ch_ttl
+		FROM
+		    channel_member chm, channel ch
+		where chm.ch_no = ch.ch_no
+		and chm.mem_no = #{memNo}
+	</select>
+	
+	<select id="getThList" parameterType="ChannelMemberVO" resultType="ChannelMemberVO">
+		SELECT
+		        ch.ch_no
+		    ,   chm.ch_mem_th_no
+		    ,   cht.th_ttl
+		FROM
+		    channel_member chm, channel ch, channel_thread cht
+		where chm.ch_no = ch.ch_no
+		and cht.ch_no = chm.ch_no
+		and ch.ch_no = cht.ch_no
+		and cht.th_no = chm.ch_mem_th_no
+		and chm.mem_no = #{memNo}
+	</select>
+	
+	<select id="getFileList" parameterType="ChannelMemberVO" resultType="AtchFileDetailVO">
+		SELECT
+		    cld_no
+		  , cld_file_no
+		  , to_char(cld_rgdt , 'YYYY.MM.DD') str_dt
+		  , atd.*
+		  , to_char(atd.atch_file_regdt, 'YYYY.MM.DD') atch_file_reg_dt_str
+		  , m.mem_name
+		FROM
+		    cloud cld , atch_file_detail atd, member m
+		where cld.cld_file_no=atd.atch_detail_file_id
+		    and cld.mem_no = m.mem_no
+	    <if test="chNo != 0">
+	   		and cld.ch_no = #{chNo}
+	    </if>
+	    <if test="chMemThNo != 0">
+	    	and cld.th_no = #{chMemThNo}
+	    </if>
+	    <if test="memNo != 0">
+	    	and cld.mem_no = #{memNo}
+	    	and (cld.ch_no = 0 and cld.th_no = 0)
+	    </if>
+	    ORDER BY cld.cld_rgdt desc
+	</select>
+
+
+	<delete id="deletFile" parameterType="DriveVO">
+		DELETE FROM cloud
+		WHERE
+		    cld_file_no = #{cldFileNo}
+			<if test="memNo != 0">
+		    AND mem_no = #{memNo}
+		    </if>
+		    <if test="chNo != 0">
+		    AND ch_no = #{chNo}
+		    </if>
+		    <if test="thNo != 0">
+		    AND th_no = ${thNo}
+		    </if>
+	</delete>
+	
+	
+	<update id="updateFile" parameterType="DriveVO">
+		UPDATE cloud
+		SET
+		   cld_file_no = #{updateFileId},
+		   cld_rgdt = sysdate,
+		   mem_no = #{updateMem}
+		WHERE
+			cld_file_no = #{cldFileNo}
+		    <if test="memNo != 0">
+		    AND mem_no = #{memNo}
+		    </if>
+		    <if test="chNo != 0">
+		    AND ch_no = #{chNo}
+		    </if>
+		    <if test="thNo != 0">
+		    AND th_no = ${thNo}
+		    </if>
+ 	</update>
+ 	
+ 	
+ 	<select id="sizeMyCheck" parameterType="DriveVO" resultType="int">
+ 		SELECT
+		   Round((214748364800 - sum(atd.atch_file_size)) / 1024)
+		FROM
+		    cloud c, atch_file_detail atd
+		where mem_no = #{memNo}
+		and ch_no = 0
+		and th_no = 0
+		and c.cld_file_no = atd.atch_detail_file_id
+ 	</select>
+ 	
+ 	<select id="getChDriveSize" parameterType="DriveVO" resultType="int">
+ 		SELECT
+		     Round(p.plan_tot_sz / 1024)
+		FROM
+		    channel_plan cp, plan p
+		where cp.ch_no = #{chNo}
+		and cp.plan_no = p.plan_no
+		and paid_no = (SELECT MAX(paid_no)
+		                  FROM channel_plan
+		                  where ch_no = #{chNo}
+		               )
+ 	</select>
+ 	
+ 	<select id="getThDriveSize" parameterType="DriveVO" resultType="int">
+ 		SELECT
+		    Round(p.plan_tot_sz / 1024)
+		FROM
+		    channel_plan cp, plan p, channel_thread cht
+		where cp.ch_no = cht.ch_no
+		and cht.th_no = #{thNo}
+		and cp.plan_no = p.plan_no
+		and paid_no = (SELECT MAX(paid_no)
+		                  FROM channel_plan
+		                  where ch_no = cht.ch_no
+		               )
+ 	</select>
+ 	
+ 	<select id="sizeCheck" parameterType="DriveVO" resultType="int">
+ 		SELECT
+		   Round(#{chSize} - (sum(atd.atch_file_size) / 1024))
+		FROM
+		    cloud c, atch_file_detail atd
+		where 
+		1=1
+		<if test="chNo != 0">
+		    AND ch_no = #{chNo}
+		    and th_no = 0
+		</if>
+	 	<if test="thNo != 0">
+	    	AND th_no = ${thNo}
+	    	and ch_no = 0
+	    </if>
+		and c.cld_file_no = atd.atch_detail_file_id
+ 	</select>
+ 	
+ 	
+ 	<insert id="uploadFile" parameterType="DriveVO">
+ 		<selectKey keyProperty="cldNo" resultType="int" order="BEFORE">
+  			select seq_cloud.nextval from dual
+  		</selectKey>
+  		INSERT INTO cloud (
+		    cld_no
+		    , mem_no
+		    , cld_file_no
+		    , ch_no
+		    , th_no
+		) VALUES (
+		    #{cldNo}
+		  , #{memNo}
+		  , #{cldFileNo}
+		  , #{chNo}
+		  , #{thNo}
+		)
+ 	</insert>
+<!--  	uploadFile -->
+
+
+</mapper>

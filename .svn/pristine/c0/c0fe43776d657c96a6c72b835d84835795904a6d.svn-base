@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.calendar.service.ICalMapper">
+
+	<!-- 전체 일정 출력 코드 -->
+  	<select id="list" resultType="CalVO">
+ 		select
+ 			SCHDL_NO, SCHDL_CD, STRT_DT, END_DT, SCHDL_TTL, SCHDL_CONTS, MEM_NO, CH_NO, TH_NO, COLOR, ALLDAY
+ 		from 
+ 			scheduler
+ 		where 1=1
+	 		<if test="thNo == 0">
+	 		    and not schdl_cd='SCHST002'
+            	and (mem_no=#{memNo} and ch_no=#{chNo})
+            	or (schdl_cd='SCHST003' and ch_no=#{chNo})
+	 		</if>
+	 		<if test="thNo != 0">
+	            and th_no=#{thNo} and CH_NO=#{chNo}
+	            or (schdl_cd='SCHST001' and mem_no=#{memNo})
+                or (schdl_cd='SCHST003' and ch_no=#{chNo})
+	 		</if>
+ 		order by schdl_no desc
+  	</select>
+  	
+  	<!-- 개인 또는 조직 일정 출력 -->
+  	<select id="gubunList" resultType="CalVO">
+ 		select
+ 			SCHDL_NO, SCHDL_CD, STRT_DT, END_DT, SCHDL_TTL, SCHDL_CONTS, MEM_NO, CH_NO, TH_NO, COLOR, ALLDAY
+ 		from 
+ 			scheduler
+ 		where  1=1
+	 		and schdl_cd = #{schdlCd}
+	 		<if test="schdlCd=='SCHST001'">
+	 			and mem_no = #{memNo}
+ 			</if>
+ 			<if test="schdlCd=='SCHST003'">
+ 				and ch_no = #{chNo}
+ 			</if>
+ 			<if test="schdlCd=='SCHST002'">
+ 				and ch_no = #{chNo}
+		 		<if test="thNo!=0">
+		 			and th_no = #{thNo}
+		 		</if>
+		 		<if test="thNo==0">
+		 			and schdl_no=0
+		 		</if>
+		 	</if>
+ 		order by schdl_no desc
+  	</select>
+  	
+  	<delete id="delete" parameterType="CalVO">
+  		delete from scheduler
+  		where schdl_no=#{schdlNo}
+  	</delete>
+  	
+  	<insert id="insert" parameterType="CalVO" useGeneratedKeys="true">
+  		<selectKey keyProperty="schdlNo" resultType="int" order="BEFORE">
+  			select seq_cal.nextval from dual
+  		</selectKey>
+		INSERT INTO scheduler (
+			schdl_no
+			, schdl_cd
+			, strt_dt
+			, end_dt
+			, schdl_ttl		
+			, schdl_conts
+			, mem_no
+			, ch_no
+			, th_no
+			, color
+			, allday
+		) VALUES (
+			#{schdlNo}
+			, #{schdlCd}
+			, #{strtDt}
+			, #{endDt}
+			, #{schdlTtl}
+			, #{schdlConts}
+			, #{memNo}
+			, #{chNo}
+			, #{thNo}
+			, #{color}
+			, #{allDay}
+		)
+  	</insert>
+  	
+  	<select id="selectone" resultType="CalVO">
+		SELECT
+		    sch.SCHDL_NO
+		    , sch.SCHDL_CD
+		    , sch.STRT_DT
+		    , sch.END_DT
+		    , sch.SCHDL_TTL
+		    , sch.SCHDL_CONTS
+		    , sch.MEM_NO
+		    , sch.CH_NO
+		    , sch.TH_NO
+		    , sch.COLOR
+		    , sch.ALLDAY
+		    , ch.ch_ttl chTtl
+		    , CT.TH_TTL thTtl
+		FROM 
+		    SCHEDULER SCH
+		    LEFT OUTER JOIN CHANNEL CH ON SCH.CH_NO = CH.CH_NO
+		    LEFT OUTER JOIN CHANNEL_THREAD CT ON SCH.TH_NO = CT.TH_NO
+		WHERE
+		    SCH.SCHDL_NO=#{schdlNo}
+  	</select>
+  	
+  	<update id="update" parameterType="CalVO">
+  		update scheduler
+  		set
+	  		schdl_no = #{schdlNo}     
+			, schdl_cd = #{schdlCd}   
+			, strt_dt = #{strtDt}    
+			, end_dt = #{endDt}     
+			, schdl_ttl = #{schdlTtl}  
+			, schdl_conts = #{schdlConts}
+			, mem_no = #{memNo}     
+			, ch_no = #{chNo}      
+			, th_no = #{thNo}      
+			, color = #{color}     
+			, allday = #{allDay}
+		where schdl_no = #{schdlNo}
+  	</update>
+  	
+</mapper>

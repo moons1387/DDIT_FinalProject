@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.member.service.IMemberMapper">
+
+	<resultMap type="MemberVO" id="MemberMap">
+		<id property="memNo" column="mem_no" />
+		<result property="memNo" column="mem_no" />
+		<result property="memId" column="mem_id" />
+		<result property="memPw" column="mem_pw" />
+		<result property="memName" column="mem_name" />
+		<result property="memPrflimg" column="mem_prflimg" />
+		<result property="memEmail" column="mem_email" />
+		<result property="memPh" column="mem_ph" />
+		<result property="memAddr1" column="mem_addr1" />
+		<result property="memAddr2" column="mem_addr2" />
+		<result property="memPstCd" column="mem_pst_cd" />
+		<result property="memAgree" column="mem_agree" />
+		<result property="memIntr" column="mem_intr" />
+		<result property="memAutograph" column="mem_autograph" />
+		<result property="memRgdt" column="mem_rgdt" />
+		<result property="memStatus" column="mem_status" />
+		<result property="memDrmnt" column="mem_drmnt" />
+		<result property="memShtot" column="mem_shtot" />
+		<result property="enabled" column="enabled" />
+		<result property="rememberLogin" column="remember_login" />
+		<result property="rememberId" column="remember_id" />
+		<collection property="authList" resultMap="roleMap" />
+	</resultMap>
+
+	<resultMap type="RoleVO" id="roleMap">
+		<result property="roleNo" column="role_no" />
+		<result property="memAuth" column="mem_auth" />
+		<result property="memNo" column="mem_no" />
+	</resultMap>
+	
+	<update id="editProfile" parameterType="MemberVO">
+		update member
+		set
+			mem_Pw = #{memPw},
+			mem_Name = #{memName},
+			mem_prflimg = #{memPrflimg},
+			mem_Email = #{memEmail},
+			mem_Ph = #{memPh},
+			mem_Addr1 = #{memAddr1},
+			mem_Addr2 = #{memAddr2},
+			mem_Intr = #{memIntr}
+		where mem_no = #{memNo}
+	</update>
+	
+	<select id="getMemNoById" resultType="MemberVO">
+		select mem_no, mem_id, mem_name, mem_email, mem_ph, mem_prflimg
+		from member
+		where mem_id = #{memId}
+	</select>
+	
+	<select id="getMemInfoById" resultType="MemberVO">
+		select mem_no, mem_id, mem_name, mem_email, mem_ph, mem_prflimg 
+        from member 
+        where mem_id = #{memId}
+	</select>
+	
+	<select id="selectMemById" resultType="MemberVO">
+		select * from member
+		where mem_id = #{memId}
+	</select>
+	
+	
+</mapper>

@@ -1,0 +1,52 @@
+package kr.or.ddit.components.admin.membership.web;
+
+import java.util.List;
+
+import javax.inject.Inject;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import kr.or.ddit.components.plan.service.IPlanService;
+import kr.or.ddit.components.plan.vo.PlanVO;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Controller
+@RequestMapping("/admin")
+public class AdminMemberShipController {
+
+	@Inject
+	private IPlanService planService;
+
+	@PreAuthorize("hasRole('ROLE_ADMIN')")
+	@GetMapping("/membership")
+	public String membershipBronze(Model model) {
+		log.info("==========membershipBronze==============");
+		List<PlanVO> planCateNm = planService.planCateName();
+		model.addAttribute("planCateNm", planCateNm);
+
+		List<PlanVO> planDetail = planService.list(0);
+		model.addAttribute("planDetail", planDetail);
+
+		List<PlanVO> planExpList = planService.planExpList();
+		model.addAttribute("planExpList", planExpList);
+		return "admin/memberShipDetail";
+	}
+
+	@PostMapping("/planDetailInsert")
+	public ResponseEntity<String> planDetailInsert(@RequestBody PlanVO planVO) {
+		log.info("=========planDetailaInsert");
+		log.info("planVO : {}", planVO);
+		planService.AdminPlanInsert(planVO);
+		return new ResponseEntity<String>(HttpStatus.OK);
+	}
+
+}

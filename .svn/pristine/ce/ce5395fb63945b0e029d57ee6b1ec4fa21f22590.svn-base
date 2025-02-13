@@ -1,0 +1,59 @@
+
+let coinBtn;
+const coinBtnSetter = () => {
+  if(!coinBtn) {
+    coinBtn = MAIN_CONTENTS.querySelector('#coinBtn');
+    coinBtn.addEventListener('click', () => {
+      coinCaller();
+    });
+  }
+}
+
+
+var flag = true;
+
+var pdList = [];
+
+const coinCaller = async () => {
+  let symbols = "";
+  while(flag) {
+    if(confirm('add?')) {
+      let coin = prompt('coin');
+      symbols+=`${coin},`;
+      flag = true;
+    } else {
+      flag = false;
+      symbols = symbols.slice(0, -1);
+    }
+  }
+  console.log(symbols);
+  flag = true;
+  // let res = await axios.get("/synerhub/coin/ten", axiosHeaderJson);
+  // console.log("BTC",res.data.data.BTC.quote.KRW.price);
+  // console.log("ETH",res.data.data.ETH.quote.KRW.price);
+  // console.log("USDT",res.data.data.USDT.quote.KRW.price);
+  // console.log("SOL",res.data.data.SOL.quote.KRW.price);
+  // console.log("BNB",res.data.data.BNB.quote.KRW.price);
+  // console.log("DOGE",res.data.data.DOGE.quote.KRW.price);
+  // console.log("XRP",res.data.data.XRP.quote.KRW.price);
+  // console.log("USDC",res.data.data.USDC.quote.KRW.price);
+  // console.log("ADA",res.data.data.ADA.quote.KRW.price);
+  // console.log("TRX",res.data.data.TRX.quote.KRW.price);
+
+  let res = await axios.get("/synerhub/coin/list", axiosHeaderJson);
+
+  pdList = priceDesc(res.data.data, pdList)
+
+  
+}
+
+
+
+const priceDesc = (data, pdList) => {
+
+  for(let i = 0; i < 10; i ++) {
+    pdList.push(data(i));
+  }
+
+  return pdList;
+}

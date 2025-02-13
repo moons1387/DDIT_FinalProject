@@ -1,0 +1,160 @@
+package kr.or.ddit.components.project.service.impl;
+
+import java.util.List;
+
+import javax.inject.Inject;
+
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Service;
+
+import kr.or.ddit.components.document.vo.DocumentVO;
+import kr.or.ddit.components.project.service.IProjectMapper;
+import kr.or.ddit.components.project.service.IProjectService;
+import kr.or.ddit.components.project.vo.ProjectDetailVO;
+import kr.or.ddit.components.project.vo.ProjectGroupMemberVO;
+import kr.or.ddit.components.project.vo.ProjectGroupVO;
+import kr.or.ddit.components.project.vo.ProjectSubWrkDetailVO;
+import kr.or.ddit.components.project.vo.ProjectVO;
+import kr.or.ddit.vo.PagingVO;
+
+@Primary
+@Service
+public class ProjectServiceImpl implements IProjectService{
+
+	@Inject
+	private IProjectMapper mapper;
+	
+	@Override
+	public List<ProjectVO> getProjectList(PagingVO<ProjectVO> page) {
+		return mapper.getProjectList(page);
+	}
+
+	@Override
+	public ProjectVO getProjectDetail(long no) {
+		return mapper.getProjectDetail(no);
+	}
+
+	@Override
+	public ProjectVO updateProject(ProjectVO pv) {
+		return mapper.updateProject(pv);
+	}
+
+	@Override
+	public int deleteProject(long no) {
+		return mapper.deleteProject(no);
+	}
+
+//	@Override
+//	public int getTotal(PagingVO<ProjectVO> page) {
+//		return mapper.getTotal(page);
+//	}
+
+	@Override
+	public int projectGo(long no) {
+		return mapper.projectGo(no);
+	}
+
+	@Override
+	public int projectStop(long no) {
+		return mapper.projectStop(no);
+	}
+
+	@Override
+	public int projectTerminate(long no) {
+		return mapper.projectTerminate(no);
+	}
+
+	@Override
+	public ProjectDetailVO projectDtailList(long no) {
+		return mapper.projectDetailList(no);
+	}
+
+	@Override
+	public List<ProjectVO> getProjectDetailList(PagingVO<ProjectVO> page) {
+		return mapper.getProjectDetailList(page);
+	}
+
+	@Override
+	public int getProjectDetailTotal(PagingVO<ProjectVO> page) {
+		return mapper.getProjectDetailTotal(page);
+	}
+
+	@Override
+	public int projectDetailGo(long no) {
+		return mapper.projectDetailGo(no);
+	}
+
+	@Override
+	public int projectDetailStop(long no) {
+		return mapper.projectDetailStop(no);
+	}
+
+	@Override
+	public int projectDetailTerminate(long no) {
+		return mapper.projectDetailTerminate(no);
+	}
+
+	@Override
+	public int getTotal(PagingVO<ProjectVO> page) {
+		return mapper.getTotal(page);
+	}
+
+	@Override
+	public List<ProjectVO> getList(PagingVO<ProjectVO> page) {
+		return mapper.getList(page);
+	}
+
+	@Override
+	public PagingVO<DocumentVO> dataForInsert(PagingVO<DocumentVO> page) {
+
+		page.setChannelMemberVO(mapper.getMyinfo(page));
+		page.setTotal(mapper.getDocListTotal(page));
+		page.setList(mapper.getDocList(page));
+		
+		
+		return page;
+	}
+
+	@Override
+	public ProjectVO projectInsert(ProjectVO pjtVO) {
+		
+		mapper.projectInsert(pjtVO);
+		
+		ProjectGroupVO pgVO = pjtVO.getPgVO();
+		
+		pgVO.setPjtNo(pjtVO.getPjtNo());
+		
+		mapper.projectGroupInsert(pgVO);
+		
+		int groupNo = pgVO.getGroupNo();
+		List<ProjectGroupMemberVO> pgmList = pjtVO.getPgmList();
+		for (ProjectGroupMemberVO pgmVO : pgmList) {
+			pgmVO.setGroupNo(groupNo);
+			mapper.projectGroupMemberInsert(pgmVO);
+		}
+		
+		return mapper.getProjectDetail(pjtVO.getPjtNo());
+	}
+
+	@Override
+	public ProjectVO getProject(PagingVO<ProjectVO> page) {
+		ProjectVO pjtVO = mapper.getProject(page);
+		if(mapper.getFileList(page).size() != 0) {
+			pjtVO.setFileList(mapper.getFileList(page));
+		}
+		return pjtVO;
+	}
+
+	@Override
+	public ProjectDetailVO insertPjtDetail(ProjectDetailVO projectDetailVO) {
+		mapper.inserPjtDetail(projectDetailVO);
+		int no = projectDetailVO.getPjtDtlNo();
+		return mapper.getPjtDetailVO(no);
+	}
+
+	@Override
+	public List<ProjectSubWrkDetailVO> getPjtSubWrkDtlList(int no) {
+		return mapper.getPjtSubWrkDtlList(no);
+	}
+
+}

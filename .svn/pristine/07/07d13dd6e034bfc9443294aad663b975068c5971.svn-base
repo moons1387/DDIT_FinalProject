@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.ddit.components.chatting.service.IChattingMapper">
+	<!-- study모집 게시글 list 가져오기 -->
+	<select id="getChattingGroupList" resultType="ChattingGroupVO">
+		select * from chattinggroup
+		order by st_no desc
+	</select>
+
+	<!-- 자신을 뺀 모든 유저 리스트 가져오기 -->
+	<select id="getUserList" resultType="MemberVO" parameterType="String">
+		select * from channel_member where mem_no != #{memNo}
+	</select>
+
+	<!-- Study 모집 게시글 등록 시 Alarm 테이블에도 등록 -->
+	<!-- <insert id="insertAlarm" parameterType="String"> -->
+	<!-- insert into alarm values (seq_alarm.nextval, #{stNo}, #{userId}, 'newStudy', sysdate, '${senderName}님의 게시글 등록') -->
+	<!-- </insert> -->
+
+	<!-- study 모집 게시글 등록 쿼리 -->
+	<insert id="insertChatting" parameterType="ChattingGroupVO" useGeneratedKeys="true">
+		<selectKey keyProperty="stNo" resultType="int" order="BEFORE">
+			select seq_chattinggroup.nextval from dual
+		</selectKey>
+		INSERT INTO chattinggroup (
+		    group_no
+		    , mem_no
+		    , group_title
+		    , group_date
+		) VALUES (
+		    #{groupNo}
+		  , #{memNo}
+		  , #{groupTitle}
+		  , sysdate
+		);
+	</insert>
+
+	<!-- 스터디 멤버추가 쿼리 -->
+	<insert id="addChattingMember" parameterType="ChattingGroupVO">
+		insert into studymember
+		values(#{groupNo}, #{memNo}, #{memName}, #{authRole}, 0)
+	</insert>
+
+	<!-- 해당 아이디에 대한 안읽은 alarm 리스트 가져오기 -->
+	<select id="getAlarmInfo" parameterType="String" resultType="AlarmVO">
+		select * from alarm where user_id = #{userId}
+	</select>
+
+	<!-- 읽은 알람 지우기 쿼리 -->
+	<delete id="deleteAlarm" parameterType="int">
+		delete from alarm where alarm_no = #{alarmNo}
+	</delete>
+
+	<!-- 스터디 가입하기 쿼리 -->
+	<insert id="joinChattingGroup" parameterType="ChattingMemberVO">
+		insert into chattingmember values(#{groupNo}, #{memNo}, #{userName}, #{authRole}, 0)
+	</insert>
+
+	<delete id="outChattingGroup" parameterType="ChattingGroupVO">
+		delete from chattingmember
+		where group_no = #{groupNo}
+		and mem_no = #{memNo}
+	</delete>
+
+	<select id="getMembers" resultType="MemberVO">
+		select * from channel_member where ch_no = #{chNo} 
+	</select>
+
+	<select id="getUser" parameterType="MemberVO" resultType="MemberVO">
+		select * from member where mem_no = #{memNo}
+	</select>
+
+	<select id="getChattingMember" parameterType="int" resultType="ChattingMemberVO">
+		select * from groupmember where group_no = #{groupNo}
+	</select>
+</mapper>

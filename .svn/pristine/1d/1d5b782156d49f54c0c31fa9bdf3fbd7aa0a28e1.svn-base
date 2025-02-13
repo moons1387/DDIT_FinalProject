@@ -1,0 +1,90 @@
+package kr.or.ddit.components.chatting.service.impl;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.inject.Inject;
+
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Service;
+
+import kr.or.ddit.components.chatting.service.IChattingGroupService;
+import kr.or.ddit.components.chatting.service.IChattingMapper;
+import kr.or.ddit.components.chatting.vo.AlarmVO;
+import kr.or.ddit.components.chatting.vo.ChattingGroupVO;
+import kr.or.ddit.components.chatting.vo.ChattingMemberVO;
+import kr.or.ddit.vo.MemberVO;
+
+@Primary
+@Service
+public class ChattingGroupServiceImpl implements IChattingGroupService {
+	
+	@Inject
+	private IChattingMapper mapper;
+	
+	@Override
+	public List<ChattingGroupVO> getChattingGroupList() {
+		return mapper.getChattingGroupList();
+	}
+
+	@Override
+	public int insertChatting(ChattingGroupVO group) {
+		// 스터디그룹 생성
+		int result = mapper.insertChatting(group);
+		
+		group.setAuthRole("스터디장");
+		// 스터디장 스터디 멤버에 추가
+		mapper.addChattingMember(group);
+		
+		int memNo = group.getMemNo();
+		// 자신을 뺀 모든 유저의 List를 가져옴
+		List<MemberVO> memberList = mapper.getUserList(memNo);
+		Map<String , Object> map = new HashMap<String, Object>();
+		for (MemberVO member : memberList) {
+			map.put("senderMemNo", group.getMemNo());
+			map.put("userId", member.getMemId());
+			map.put("stNo", group.getGroupNo());
+			
+			// alarm테이블에 자신을 뺀 모든 유저에 대한 알림 추가 
+			mapper.insertAlarm(map);
+		}
+		return result;
+	}
+
+	@Override
+	public List<AlarmVO> getAlarmInfo(String userId) {
+		return mapper.getAlarmInfo(userId);
+	}
+
+	@Override
+	public void deleteAlarm(int alarmNo) {
+		mapper.deleteAlarm(alarmNo);
+	}
+
+	@Override
+	public int joinChattingGroup(ChattingMemberVO member) {
+		return mapper.joinChattingGroup(member);
+	}
+
+	@Override
+	public int outChattingGroup(ChattingGroupVO chattingGroup) {
+		return mapper.outChattingGroup(chattingGroup);
+	}
+
+	@Override
+	public List<MemberVO> getMembers() {
+		return mapper.getMembers();
+	}
+
+	@Override
+	public MemberVO getUser(MemberVO member) {
+		return mapper.getUser(member);
+	}
+
+	@Override
+	public List<ChattingMemberVO> getChattingMember(int groupNo) {
+		return mapper.getChattingMember(groupNo);
+	}
+
+}

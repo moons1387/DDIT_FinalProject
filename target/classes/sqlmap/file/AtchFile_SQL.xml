@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.file.service.IAtchFileMapper">
+	
+	<resultMap type="AtchFileVO" id="atchFileMap">
+		<id property="atchFileId" column="atch_file_id"/>
+		<result property="atchFileId" column="atch_file_id" />
+		<result property="atchFileExpln" column="atch_file_expln" />
+		<result property="atchFileRegdt" column="atch_file_regdt" />
+		<result property="atchFileRemovedt" column="atch_file_removedt" />
+	</resultMap>
+	
+	<insert id="insert" parameterType="AtchFileVO" useGeneratedKeys="true">
+		<selectKey keyProperty="atchFileId" resultType="int" order="BEFORE">
+			select seq_atch.nextval from dual
+		</selectKey>
+		INSERT INTO atch_file (
+		    atch_file_id
+		   ,atch_file_expln
+		   ,atch_file_regdt
+		) VALUES (
+		    #{atchFileId}
+		   ,#{atchFileExpln}
+		   ,sysdate
+		)    
+	</insert>
+	
+	 <insert id="insertDetail" parameterType="AtchFileDetailVO">
+	 	<selectKey keyProperty="atchDetailFileId" resultType="int" order="BEFORE">
+			select seq_atch_detail.nextval from dual
+		</selectKey>
+        INSERT INTO atch_file_detail (
+            atch_detail_file_id,
+            atch_file_id,
+            atch_file_path,
+            atch_file_size,
+            atch_file_extn,
+            atch_file_orgnl_nm,
+            atch_file_save_nm,
+            atch_file_regdt
+        ) VALUES (
+            #{atchDetailFileId},
+            #{atchFileId},
+            #{atchFilePath},
+            #{atchFileSize},
+            #{atchFileExtn},
+            #{atchFileOrgnlNm},
+            #{atchFileSaveNm},
+            SYSDATE
+        )
+    </insert>
+    
+    <select id="getDetail" resultType="AtchFileDetailVO" parameterType="int">
+        SELECT
+		    atch_detail_file_id
+		  , atch_file_id
+		  , atch_file_path
+		  , atch_file_size
+		  , atch_file_extn
+		  , atch_file_orgnl_nm
+		  , atch_file_save_nm
+		  , atch_file_regdt
+		  , atch_file_remove_yn
+		  , atch_file_use_yn
+		FROM
+		    atch_file_detail
+		where atch_file_id = #{atchFileId}
+    </select>
+    
+    <select id="getOnlyFile" resultType="AtchFileDetailVO" parameterType="ChattingGroupVO">
+        SELECT
+		    atd.atch_detail_file_id
+		  , atd.atch_file_id
+		  , atd.atch_file_path
+		  , atd.atch_file_size
+		  , atd.atch_file_extn
+		  , atd.atch_file_orgnl_nm
+		  , atd.atch_file_save_nm
+		  , TO_CHAR(atd.atch_file_regdt, 'YYYY-MM-DD') str_dt
+		  , atd.atch_file_remove_yn
+		  , atd.atch_file_use_yn
+		FROM
+		    atch_file_detail atd, atch_file at, chatmessage chm
+		where chm.group_no = #{groupNo}
+		and chm.msg_file_id = at.atch_file_id
+		and at.atch_file_id = atd.atch_file_id
+		order by atd.atch_file_regdt desc
+    </select>
+    
+    
+    <insert id="thboardInsert" parameterType="AtchFileVO" useGeneratedKeys="true">
+		<selectKey keyProperty="atchFileId" resultType="int" order="BEFORE">
+			select seq_atch.nextval from dual
+		</selectKey>
+		INSERT INTO atch_file (
+		    atch_file_id
+		   ,atch_file_expln
+		   ,atch_file_regdt
+		) VALUES (
+		    #{atchFileId}
+		   ,#{atchFileExpln}
+		   ,sysdate
+		)    
+	</insert>
+    
+    <insert id="thinsertDetail" parameterType="AtchFileDetailVO">
+	 	<selectKey keyProperty="atchDetailFileId" resultType="int" order="BEFORE">
+			select seq_atch_detail.nextval from dual
+		</selectKey>
+        INSERT INTO atch_file_detail (
+            atch_detail_file_id,
+            atch_file_id,
+            atch_file_path,
+            atch_file_size,
+            atch_file_extn,
+            atch_file_orgnl_nm,
+            atch_file_save_nm,
+            atch_file_regdt
+        ) VALUES (
+            #{atchDetailFileId},
+            #{atchFileId},
+            #{atchFilePath},
+            #{atchFileSize},
+            #{atchFileExtn},
+            #{atchFileOrgnlNm},
+            #{atchFileSaveNm},
+            SYSDATE
+        )
+    </insert>
+    
+    
+
+</mapper>

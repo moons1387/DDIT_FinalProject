@@ -1,0 +1,245 @@
+<%@page import="java.util.List"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ page session="false"%>
+<c:set value="${pageContext.request.contextPath }" var="contextPath" />
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.10/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.10/dist/sweetalert2.min.js"></script>
+
+<div class="body-wrapper">
+	<div class="container-fluid">
+		<div class="row">
+			<div id="main_contents">
+				<div class="mb-3 overflow-hidden position-relative">
+					<div class="px-3">
+						<h4 class="fs-6 mb-0">관리자</h4>
+						<nav aria-label="breadcrumb">
+							<ol class="breadcrumb mb-0">
+								<li class="breadcrumb-item"><a href="../main/index.html">서비스 관리</a></li>
+								<li class="breadcrumb-item" aria-current="page">Membership-Bronze</li>
+							</ol>
+						</nav>
+					</div>
+				</div>
+
+				<div class="card">
+					<div class="card-body">
+						<div class="pb-2 d-md-flex align-items-center">
+							<h3>멤버쉽 상세 보기</h3>
+							<div class="btn-group mb-2 ms-auto" role="group" aria-label="Basic example">
+								<div class="btn-group" role="group">
+									<button id="btnGroupDrop1" type="button" class="btn bg-success-subtle text-success  dropdown-toggle rounded-end" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">추가</button>
+									<div class="dropdown-menu" aria-labelledby="btnGroupDrop1" onclick="MemberShipAdd()">
+										<a class="dropdown-item" id="addInputBtn" href="javascript:void(0)">Input</a> <a class="dropdown-item" id="addCheckboxBtn" href="javascript:void(0)">Checkbox</a>
+									</div>
+								</div>
+								<button type="button" id="ModifyBtn" class="btn bg-warning-subtle text-warning" onclick="memShipModify()">수정</button>
+								<button type="button" id="cancelBtn" class="btn bg-danger-subtle text-danger" disabled>삭제</button>
+							</div>
+						</div>
+						<div class="table-responsive pb-4" data-simplebar>
+							<table id="all-student" class="table table-striped text-nowrap align-middle table-bordered border">
+								<thead>
+									<tr>
+										<th class="text-center" style="width: 40px;"><input type="checkbox" class="form-check-input primary" id="contact-check-all" /></th>
+										<th class="text-center" style="width: 100px;"></th>
+										<c:forEach var="res" items="${planDetail }">
+											<th class="text-center" style="width: 300px;">${res.planNm }</th>
+										</c:forEach>
+									</tr>
+								</thead>
+								<tbody class="border-top">
+									<tr>
+										<td class="text-center" style="width: 40px;"></td>
+										<td class="text-center" style="height: 240px;">
+											<div class="d-flex align-items-center justify-content-center">
+												<div>
+													<h6 class="mb-1">등급</h6>
+												</div>
+											</div>
+										</td>
+										<c:forEach var="res" items="${planDetail }">
+											<td class="text-center" style="width: 300px;"><img src="${contextPath}${res.url}" alt="spike-img" class="img-fluid" width="200" height="200"></td>
+										</c:forEach>
+									</tr>
+
+									<c:forEach var="cateNm" items="${planCateNm }" varStatus="i">
+										<tr data-memberShip-no="${i.index }" id="MemberShipContents_${i.index }">
+											<td class="text-center" style="width: 40px;"><input type="checkbox" class="form-check-input primary" id="contact-check" /></td>
+											<td>
+												<div class="d-flex align-items-center justify-content-center">
+													<div>
+														<h6 class="mb-1">${cateNm.planCateNm }</h6>
+													</div>
+												</div>
+											</td>
+											<c:forEach var="res" items="${planExpList }" varStatus="i">
+												<c:if test="${cateNm.planCateNm eq res.planCateNm }">
+													<c:if test="${res.planIntr == null }">
+														<c:if test="${res.planUse eq 'false' }">
+															<td class="text-center" rowspan="1" style="width: 300px;">
+																<p class="fs-3 mb-0">
+																	<input class="form-check-input success" type="checkbox" id="MemberShipChkBox" disabled> <strong id="">${res.planIntr }</strong>
+																</p>
+															</td>
+														</c:if>
+														<c:if test="${res.planUse eq 'true' }">
+															<td class="text-center" rowspan="1" style="width: 300px;">
+																<p class="fs-3 mb-0">
+																	<input class="form-check-input success" type="checkbox" id="MemberShipChkBox" checked disabled> <strong>${res.planIntr }</strong>
+																</p>
+															</td>
+														</c:if>
+													</c:if>
+													<c:if test="${res.planIntr != null }">
+														<td class="text-center" rowspan="1" style="width: 300px;">
+															<p class="fs-3 mb-0">
+																<strong>${res.planIntr }</strong>
+															</p>
+														</td>
+													</c:if>
+												</c:if>
+											</c:forEach>
+										</tr>
+									</c:forEach>
+								</tbody>
+							</table>
+						</div>
+						<div class="mb-3 me-3" style="text-align: right; display: none;" id="AdminMemberShipBtn">
+							<button class="justify-content-center btn me-3 mb-1 bg-danger-subtle text-danger" id="backBtn">취소</button>
+							<button class="justify-content-center btn mb-1 bg-primary-subtle text-primary" onclick="MemberShipInsert()">저장</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+	function MemberShipAdd() {
+		$("#AdminMemberShipBtn").css("display", "block");
+	}
+
+	$(document).ready(function () {
+
+		// 체크박스 상태에 따라 삭제 버튼 활성화/비활성화
+		$("input[type='checkbox']").change(function () {
+			const anyChecked = $("input[type='checkbox']:not(#contact-check-all):checked").length > 0;
+			$("#cancelBtn").prop("disabled", !anyChecked);
+		});
+
+		// 전체 선택 체크박스 기능
+		$("#contact-check-all").change(function () {
+			const isChecked = $(this).is(":checked");
+			$("input[id='contact-check']").prop("checked", isChecked);
+			$("#cancelBtn").prop("disabled", !isChecked); // 전체 선택 시 삭제 버튼 활성화
+		});
+
+		$("#addInputBtn").click(function () {
+			const newRow = `<tr>
+          <td class="text-center" style="width: 40px;">
+            <input type="checkbox" class="form-check-input primary" id="contact-check" />
+          </td>
+          <td>
+            <div class="d-flex align-items-center justify-content-center">
+              <div>
+                <input type="text" class="form-control" id="PlanCateInput">
+              </div>
+             </div>
+          </td>
+          <td class="text-center" style="width: 300px;">
+            <input type="text" class="form-control" id="BzInput">
+          </td>
+          <td class="text-center" style="width: 300px;">
+            <input type="text" class="form-control" id="SvInput">
+          </td>
+          <td class="text-center" style="width: 300px;">
+            <input type="text" class="form-control" id="GdInput">
+          </td>
+        </tr>`;
+			$("#all-student tbody").append(newRow);
+		});
+
+		$("#addCheckboxBtn").click(function () {
+			const newRow = `
+        <tr>
+          <td class="text-center" style="width: 40px;">
+            <input type="checkbox" class="form-check-input primary" id="contact-check" />
+          </td>
+          <td>
+            <div class="d-flex align-items-center justify-content-center">
+              <div>
+                <input type="text" class="form-control" id="PlanCateInput">
+              </div>
+            </div>
+          </td>
+          <td class="text-center" style="width: 300px;">
+            <input class="form-check-input success" type="checkbox" id="BzCheck">
+          </td>
+          <td class="text-center" style="width: 300px;">
+            <input class="form-check-input success" type="checkbox" id="SvCheck">
+          </td>
+          <td class="text-center" style="width: 300px;">
+            <input class="form-check-input success" type="checkbox" id="GdCheck"> 
+          </td>
+        </tr>
+      `;
+			$("#all-student tbody").append(newRow);
+		});
+
+		$("#backBtn").click(function () {
+			location.href = "/synerhub/admin/membership";
+		});
+	});
+
+	function MemberShipInsert() {
+		let planCateNm = $("#PlanCateInput").val()
+		let planCateId = $("#planCateId").val()
+		let BzInput = $("#BzInput").val();
+		let SvInput = $("#SvInput").val();
+		let GdInput = $("#GdInput").val();
+		let BzCheck = $('#BzCheck').is(':checked')
+		let SvCheck = $('#SvCheck').is(':checked')
+		let GdCheck = $('#GdCheck').is(':checked')
+
+		let data = {
+			planCateId: planCateId,
+			planCateNm: planCateNm,
+			bzInput: BzInput,
+			svInput: SvInput,
+			gdInput: GdInput,
+			bzCheck: BzCheck,
+			svCheck: SvCheck,
+			gdCheck: GdCheck
+		}
+		$.ajax({
+			url: "/synerhub/admin/PlanDetailInsert",
+			type: "post",
+			beforeSend: function (xhr) {
+				xhr.setRequestHeader(header, token);
+			},
+			data: JSON.stringify(data),
+			contentType: "application/json; charset=utf-8",
+			success: function (result) {
+				location.href = "/synerhub/admin/membership";
+			}
+		});
+	}
+
+	function memShipModify(){
+		const memShipNo = [];
+		$("#contact-check:checked").each(function(){
+			console.log("clkicked : ", $(this).closest('tr').data('membershipNo'))
+			memShipNo.push($(this).closest('tr').data('membershipNo'));
+		})
+		console.log("memShipNo : ", memShipNo);
+		
+		console.log($("#MemberShipContents_"+memShipNo[0]).find('strong').html());
+		console.log(memShipNo[0]);
+		$("#MemberShipContents_"+memShipNo[0]).find('#MemberShipChkBox').attr("disabled", "false");
+		$("#AdminMemberShipBtn").css("display", "block");
+	}
+</script>

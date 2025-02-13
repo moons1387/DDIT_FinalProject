@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.components.equipment.service.IEquipmentMapper">
+
+	<resultMap type="EquipmentVO" id="eqpMap">
+		<id property="eqpmntNo" column="eqpmnt_no" />
+		<result property="eqpmntNo" column="eqpmnt_no" />
+		<result property="eqpmntNm" column="eqpmnt_nm" />
+		<result property="eqpmntMngr" column="eqpmnt_mngr" />
+		<result property="eqpmntUsing" column="eqpmnt_using" /> 
+		<result property="eqpmntDt" column="eqpmnt_dt" />
+		<result property="eqpmntDue" column="eqpmnt_due" />
+		<result property="eqpAtchFileId" column="eqpmnt_atch_file_id" />
+		<result property="eqmntContent" column="eqmnt_content" />
+		<result property="chNo" column="ch_no" />
+		<result property="thNo" column="th_no" />
+		<result property="eqpmntCateNo" column="eqpmnt_sort_no" />
+		<result property="eqpmntCateNm" column="eqpmnt_cate_nm" />
+		<result property="memNm" column="mem_nmae" /> 
+		<result property="thTtl" column="th_ttl" />
+		<result property="thClr" column="th_clr" />
+		<result property="chTtl" column="ch_ttl" />
+		<collection property="fileEqpList" resultMap="fileEqpMap" ></collection>
+	</resultMap>
+
+	<resultMap type="AtchFileDetailVO" id="fileEqpMap">
+		<id property="atchDetailFileId" column="atch_detail_file_id" />
+		<result property="atchDetailFileId" column="atch_detail_file_id" />
+		<result property="atchFilePath" column="atch_file_path" />
+		<result property="atchFileExtn" column="atch_file_extn" />
+		<result property="atchFileOrgnlNm" column="atch_file_orgnl_nm" />
+	</resultMap>
+	
+	<select id="cateList" parameterType="EquipmentVO" resultType="EquipmentCateVO">
+		select
+			eqpmnt_cate_no
+			, eqpmnt_cate_nm
+			, ch_no
+			, eqpmnt_cate_regdate
+			, eqpmnt_cate_delyn
+		from
+			equipment_sort
+		where 1=1
+			and ch_no=#{chNo}
+			and eqpmnt_cate_delyn='N'
+		order by eqpmnt_cate_nm asc
+	</select>
+
+	<insert id="cateInsert" parameterType="EquipmentCateVO">
+		<selectKey keyProperty="eqpmntCateNo" resultType="int" order="BEFORE">
+			select seq_eqp_cate.nextval from dual
+		</selectKey>
+		INSERT INTO equipment_sort (
+			eqpmnt_cate_no
+			, eqpmnt_cate_nm
+			, ch_no
+			, eqpmnt_cate_regdate
+			, eqpmnt_cate_delyn
+		) VALUES (
+			#{eqpmntCateNo}
+			, #{eqpmntCateNm}
+			, #{chNo}
+			, SYSDATE
+			, 'N'
+		)
+	</insert>
+
+	<update id="cateUpdate" parameterType="EquipmentCateVO">
+		UPDATE
+			equipment_sort
+		SET
+			eqpmnt_cate_nm = #{eqpmntCateNm}
+		WHERE
+			eqpmnt_cate_no = #{eqpmntCateNo}
+	</update>
+
+	<delete id="cateDelete" parameterType="int">
+		Update
+			equipment_sort
+		SET
+			eqpmnt_cate_delyn='Y'
+		WHERE
+			eqpmnt_cate_no = #{eqpmntCateNo}
+	</delete>
+	<update id="eqpUpdate" parameterType="EquipmentVO">
+		update
+			equipment
+		set
+			eqpmnt_nm = #{eqpmntNm}
+			, eqpmnt_dt = SYSDATE
+			, eqpmnt_due = #{eqpmntDue}
+			, eqmnt_content = #{eqmntContent}
+			<if test="eqpAtchFileId != 0">
+				, eqpmnt_atch_file_id = #{eqpAtchFileId}
+			</if>
+		where
+			eqpmnt_no = #{eqpmntNo}
+	</update>
+
+	<insert id="eqpInsert" parameterType="EquipmentVO">
+		<selectKey keyProperty="eqpmntNo" resultType="int" order="BEFORE">
+			select seq_eqp.nextval from dual
+		</selectKey>
+		INSERT INTO equipment (
+			eqpmnt_no
+			, eqpmnt_nm
+			, eqpmnt_mngr
+			, eqpmnt_using
+			, eqpmnt_dt
+			, eqpmnt_due
+			, eqpmnt_atch_file_id
+			, eqmnt_content
+			, ch_no
+			, th_no
+			, eqpmnt_sort_no
+			, eqpmnt_delyn
+		) VALUES (
+			#{eqpmntNo}
+			, #{eqpmntNm}
+			, #{eqpmntMngr}
+			, 1
+			, SYSDATE
+			, #{eqpmntDue}
+			, #{eqpAtchFileId}
+			, #{eqmntContent}
+			, #{chNo}
+			, #{thNo}
+			, #{eqpmntCateNo}
+			, 'N'
+		)
+	</insert>
+
+	<select id="equipmentTotal" parameterType="PagingVO" resultType="int">
+		SELECT 
+			COUNT(*)
+		FROM 
+			EQUIPMENT
+		WHERE 1=1
+			AND CH_NO=#{chNo}
+			<if test="thNo!=0">
+				AND TH_NO=#{thNo}
+				OR TH_NO=0
+			</if>
+			<if test="eqpmntCateNo != 0">
+				AND EQPMNT_SORT_NO = #{eqpmntCateNo}
+			</if>
+			<if test="eqpSearchWord != null and eqpSearchWord != ''">
+				AND EQPMNT_NM LIKE '%' || #{eqpSearchWord} || '%'
+			</if>
+			AND EQPMNT_DELYN='N'
+	</select>
+	
+	<select id="selectList" parameterType="PagingVO" resultType="EquipmentVO">
+		SELECT * FROM       
+			(select ROWNUM RNUM, A.*
+					from(SELECT
+			            e.eqpmnt_no
+						, e.eqpmnt_nm
+						, e.eqpmnt_mngr
+						, e.eqpmnt_using
+						, to_char(e.eqpmnt_dt , 'yyyy.mm.dd') eqpmnt_dt
+						, e.eqpmnt_due
+						, e.eqpmnt_atch_file_id
+						, e.eqmnt_content
+						, e.ch_no
+						, e.th_no
+						, e.eqpmnt_sort_no eqpmnt_sort_no
+						, eqpst.eqpmnt_cate_nm eqpmntCateNm
+						, chm.ch_mem_nm memNm
+						, e.eqpmnt_delyn
+			            , CH.CH_TTL chTtl
+			            , CT.TH_TTL thTtl
+			            , CT.TH_CLR thClr
+					FROM
+						EQUIPMENT E
+			            LEFT OUTER JOIN CHANNEL_MEMBER CHM ON E.EQPMNT_MNGR = CHM.MEM_NO AND E.CH_NO = CHM.CH_NO
+			            LEFT OUTER JOIN CHANNEL CH ON E.CH_NO = CH.CH_NO
+			            LEFT OUTER JOIN EQUIPMENT_SORT EQPST ON E.EQPMNT_SORT_NO = EQPST.EQPMNT_CATE_NO
+			            LEFT OUTER JOIN CHANNEL_THREAD CT ON E.TH_NO=CT.TH_NO
+					WHERE
+						E.CH_NO = #{chNo}
+						<if test="thNo != 0">
+							AND (E.TH_NO = #{thNo} 
+									OR E.TH_NO = 0)
+						</if>
+						<if test="eqpmntCateNo != 0">
+							AND E.EQPMNT_SORT_NO = #{eqpmntCateNo}
+						</if>
+						<if test="eqpSearchWord != null and eqpSearchWord != ''">
+							AND E.EQPMNT_NM LIKE '%' || #{eqpSearchWord} || '%'
+						</if>
+			          	AND E.EQPMNT_DELYN='N'
+					ORDER BY (CASE WHEN E.TH_NO = 0 THEN 1 ELSE 2 END), E.EQPMNT_NO ASC)A ) B
+		WHERE 1=1
+		<![CDATA[   AND B.RNUM >= #{rowCnt} * (#{page} - 1) + 1 AND B.RNUM <= #{rowCnt} * #{page}]]>
+	</select>
+
+
+	<select id="selectOne" parameterType="EquipmentVO" resultMap="eqpMap">
+		SELECT
+			e.eqpmnt_no
+			, e.eqpmnt_nm
+			, e.eqpmnt_mngr
+			, e.eqpmnt_using
+			, to_char(e.eqpmnt_dt , 'YYYY.MM.DD HH:MM') eqpmnt_dt
+			, e.eqpmnt_due
+			, e.eqpmnt_atch_file_id eqpmnt_atch_file_id
+			, e.eqmnt_content
+			, e.ch_no
+			, e.th_no
+			, e.eqpmnt_sort_no eqpmnt_sort_no
+			, eqpst.eqpmnt_cate_nm
+			, m.mem_name memNm
+            , afd.atch_detail_file_id
+            , afd.atch_file_path
+            , afd.atch_file_extn
+            , afd.atch_file_orgnl_nm
+        from equipment E
+		join equipment_SORT EQPST on E.EQPMNT_SORT_NO = eqpst.eqpmnt_cate_no
+		left outer join atch_file af on E.EQPMNT_atch_file_id = af.atch_file_id
+		left outer join atch_file_detail afd on afd.atch_file_id = af.atch_file_id
+        LEFT OUTER JOIN MEMBER M ON E.EQPMNT_MNGR = M.MEM_NO 
+		where E.EQPMNT_NO= ${eqpmntNo}
+	</select>
+
+	<update id="eqpDelete" parameterType="int">
+		Update
+			equipment
+		set
+			eqpmnt_delyn='Y'
+		WHERE
+			eqpmnt_no = #{eqpmntNo}
+	</update>
+
+	<update id="eqpUnable" parameterType="int">
+		Update
+			equipment
+		set
+			eqpmnt_using=#{eqpmntUsing}
+		WHERE
+			eqpmnt_no = #{eqpmntNo}
+	</update>
+	
+	<update id="eqpUsingUpdate" parameterType="int">
+		Update
+			equipment
+		set
+			eqpmnt_using= 0
+		WHERE
+			eqpmnt_no = #{eqpmntNo}
+	</update>
+
+	<update id="eqpUnableUsingReturn" parameterType="int">
+		UPDATE 
+			EQUIPMENT_LOG
+		SET 
+			RTN_DT=SYSDATE
+		WHERE 
+			eqpmnt_no=${eqpmntNo}
+			AND RTN_DT IS NULL
+	</update>
+	
+	<insert id="eqpUsingInsert" parameterType="EquipmentUsingVO">
+		<selectKey keyProperty="logNo" resultType="int" order="BEFORE">
+			select seq_eqp_log.nextval from dual
+		</selectKey>
+		INSERT INTO equipment_log (
+		    log_no
+		    , mem_no
+		    , req_dt
+		    , use_strt_dt
+		    , rtn_estmt_dt
+		    , use_for
+		    , eqpmnt_no
+		    , ch_no
+		    , th_no
+		) VALUES (
+			#{logNo}
+			, #{memNo}
+			, SYSDATE
+			, #{useStrtDt}
+			, #{rtnEstmtDt}
+			, #{useFor}
+			, #{eqpmntNo}
+			, #{chNo}
+			, #{thNo}
+		)
+	</insert>
+	
+	<select id="eqpLiveList" parameterType="int" resultType="EquipmentUsingVO">
+		SELECT EL.LOG_NO logNo, EL.EQPMNT_NO eqpmntNo, EQ.EQPMNT_NM eqpmntNm, TH_TTL, TH_CLR, USE_STRT_DT, RTN_ESTMT_DT, USE_FOR
+		FROM
+		    EQUIPMENT_LOG EL
+		    , EQUIPMENT EQ
+		    , CHANNEL_THREAD CT
+		WHERE
+		    EL.EQPMNT_NO = EQ.EQPMNT_NO
+		    AND EL.TH_NO = CT.TH_NO
+		    AND RTN_DT IS NULL
+		    AND EL.CH_NO=#{chNo}
+	</select>	
+	
+	<select id="eqpUsingSelectOne" parameterType="EquipmentUsingVO" resultType="EquipmentUsingVO">
+		SELECT 
+			A.*
+			, cm.ch_mem_nm chmemNm
+			, CM.CH_MEM_TH_NM thTtl
+			, CH.CH_TTL chTtl
+			, CT.TH_CLR thClr
+		FROM
+			CHANNEL_MEMBER CM JOIN
+				(SELECT
+					MEM_NO
+					, LOG_NO
+                    , EL.EQPMNT_NO
+					, EQPMNT_NM
+					, USE_FOR
+					, USE_STRT_DT
+					, RTN_ESTMT_DT
+				FROM EQUIPMENT_LOG EL
+					JOIN EQUIPMENT EQ ON EQ.EQPMNT_NO = EL.EQPMNT_NO
+					JOIN CHANNEL CH ON CH.CH_NO = EQ.CH_NO
+					LEFT OUTER JOIN CHANNEL_THREAD CT ON EQ.TH_NO = CT.TH_NO
+				WHERE
+					EL.LOG_NO = #{logNo}) A
+			ON CM.MEM_NO = A.MEM_NO
+			JOIN CHANNEL CH ON CM.CH_NO = CH.CH_NO
+	  		JOIN CHANNEL_THREAD CT ON CM.CH_MEM_TH_NO = CT.TH_NO
+		WHERE CM.CH_NO = #{chNo}
+	</select>
+	
+	<update id="eqpUsingLiveUpdate" parameterType="EquipmentUsingVO">
+		UPDATE 
+			EQUIPMENT_LOG
+		SET
+			USE_STRT_DT=#{useStrtDt}
+			, RTN_ESTMT_DT=#{rtnEstmtDt}
+			, USE_FOR=#{useFor}
+		where LOG_NO=#{logNo}
+	</update>
+	
+	<update id="eqpUsingReturn" parameterType="int">
+		UPDATE 
+			EQUIPMENT_LOG
+		SET
+			RTN_DT=SYSDATE
+		where LOG_NO=#{logNo}
+	</update>
+	
+	<update id="eqpUsingReturnState" parameterType="int">
+		UPDATE EQUIPMENT
+			SET EQPMNT_USING=1
+		WHERE EQPMNT_NO = (SELECT
+					EQPMNT_NO
+		        FROM
+		        	EQUIPMENT_LOG
+		        WHERE
+		        	LOG_NO=#{logNo})
+	</update>
+	
+	<select id="getChUser" parameterType="EquipmentVO" resultType="EquipmentVO">
+		SELECT 
+		   M.MEM_PRFLIMG memPrflimg
+		   , CHM.CH_MEM_NM memNm
+		   , CHM.CH_PRP
+           , CHM.CH_MEM_TH_NO chMemThNo
+		FROM 
+		    MEMBER M, CHANNEL_MEMBER CHM
+		WHERE 1=1 
+		    AND M.MEM_NO=CHM.MEM_NO
+		    AND CHM.CH_NO=#{chNo}
+		    AND M.MEM_NO=#{memNo}
+		    <if test="thNo!=0">
+		    	and (CHM.CH_MEM_TH_NO=#{thNo} OR CHM.CH_PRP='C')
+		    </if>
+	</select>
+	
+	
+	<select id="getChNo" parameterType="int" resultType="int">
+		SELECT CH_NO
+		FROM CHANNEL_THREAD
+		WHERE TH_NO = #{thNo}
+	</select>
+	
+	<select id="eqpCount" parameterType="EquipmentVO" resultType="int">
+        SELECT COUNT(*)
+	    FROM EQUIPMENT 
+	    WHERE 
+	    	CH_NO=#{chNo}
+	    	AND (TH_NO=#{thNo} OR TH_NO=0)
+	    	AND EQPMNT_DELYN='N'
+	</select>
+	
+	
+	<select id="eqpUsingCount" parameterType="EquipmentVO" resultType="int">
+		SELECT COUNT(*)
+        FROM EQUIPMENT
+        WHERE 
+            CH_NO = #{chNo}
+            AND EQPMNT_USING = 0
+	</select>
+	
+</mapper>
